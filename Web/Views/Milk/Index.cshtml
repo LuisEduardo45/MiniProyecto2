@@ -1,0 +1,21 @@
+﻿@using Services.Dtos
+@{
+    ViewData["Title"] = "Home Page";
+}
+@model MilkModels;
+<div class="text-center">
+    @if (Model.Milks.Count > 0)
+    {
+        <ul>
+            @for (int i = 0; i < Model.Milks.Count; i++)
+            {
+                <li> @(i + 1) @Model.Milks.ToArray()[i].Liters : @Model.Milks.ToArray()[i].RecolectionDate.ToString()</li>
+            }
+        </ul>
+    }
+    else
+    {
+        <h5>No hay produccion</h5>
+    }
+
+</div>

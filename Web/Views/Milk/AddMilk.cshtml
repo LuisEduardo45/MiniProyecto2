@@ -1,0 +1,12 @@
+﻿@using Services.Dtos;
+@{
+    ViewData["Title"] = "Add Milk";
+}
+@model MilkModel;
+<div class="form-group">
+    <form class="form-inline" asp-controller="Milk" asp-action="AddMilk">
+        <input type="number" class="form-control" asp-for="Liters" placeholder="Liters" required />
+        <input type="date" class="form-control" asp-for="RecolectionDate" required />   
+        <button type="submit" class="btn btn-primary">Crear</button>
+    </form>
+</div>

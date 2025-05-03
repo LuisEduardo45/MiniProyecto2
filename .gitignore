@@ -1,0 +1,12 @@
+﻿################################################################################
+# Este archivo .gitignore ha sido creado automáticamente por Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/Domain/Domain/obj
+/Infrastructure/obj
+/Services/obj
+/Test/UnitTest/bin/Debug/net9.0
+/Test/UnitTest/obj
+/Web/.vs
+/Web/obj
