@@ -1,0 +1,35 @@
+﻿@model MvcTemplate.Models.Categoria
+
+@{
+    ViewData["Title"] = "Crear Categoría";
+}
+
+<h2 class="mb-4">Crear Nueva Categoría</h2>
+
+<form asp-action="Create" method="post">
+    <div class="mb-3">
+        <label asp-for="Titulo" class="form-label"></label>
+        <input asp-for="Titulo" class="form-control" />
+        <span asp-validation-for="Titulo" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Descripcion" class="form-label"></label>
+        <textarea asp-for="Descripcion" class="form-control"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="PorcentajeMaximo" class="form-label">Porcentaje máximo (%)</label>
+        <input asp-for="PorcentajeMaximo" class="form-control" type="number" min="0" max="100" />
+        <span asp-validation-for="PorcentajeMaximo" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,29 @@
+﻿@model IEnumerable<MiniProyecto2.Web.Models.Entrada>
+
+<h2>Entradas</h2>
+<p>Total: @ViewBag.Total</p>
+<a asp-action="Create" class="btn btn-primary">Nueva Entrada</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Monto</th>
+            <th>Fecha</th>
+            <th>Descripción</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var entrada in Model)
+        {
+            <tr>
+                <td>@entrada.Monto</td>
+                <td>@entrada.Fecha.ToShortDateString()</td>
+                <td>@entrada.Descripcion</td>
+                <td>
+                    <a asp-action="Delete" asp-route-id="@entrada.Id">Eliminar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

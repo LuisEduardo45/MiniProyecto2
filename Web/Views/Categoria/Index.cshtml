@@ -1,0 +1,29 @@
+﻿@model IEnumerable<MvcTemplate.Models.Categoria>
+
+@{
+    ViewData["Title"] = "Categorías";
+}
+
+<h2>Categorías</h2>
+
+<a asp-action="Create" class="btn btn-success mb-3">+ Nueva Categoría</a>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Título</th>
+            <th>Descripción</th>
+            <th>% Máximo</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Titulo</td>
+                <td>@item.Descripcion</td>
+                <td>@item.PorcentajeMaximo%</td>
+            </tr>
+        }
+    </tbody>
+</table>

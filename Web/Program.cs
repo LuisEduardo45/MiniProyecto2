@@ -3,6 +3,8 @@ using AutoMapper;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Services.Common;
+using Microsoft.EntityFrameworkCore;
+
 
 
 namespace MvcTemplate;

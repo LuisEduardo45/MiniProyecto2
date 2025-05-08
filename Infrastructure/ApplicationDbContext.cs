@@ -8,5 +8,7 @@ namespace Infrastructure.Repositories
     {
         //adicionar aqui las entidades que se van a usar en la aplicacion
         public DbSet<Milk> Milks { get; set; }
+        public IEnumerable<object> Categorias { get; set; }
+        public object Gastos { get; set; }
     }
 }
