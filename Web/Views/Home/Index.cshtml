@@ -1,8 +1,87 @@
-﻿@using Services.Dtos
-@{
-    ViewData["Title"] = "Milk Page";
+﻿@{
+    ViewData["Title"] = "Inicio";
 }
 
-<div class="text-center">
-   
+<div class="container mt-5">
+    <h1 class="mb-4">Panel de Control - Gestión de Gastos</h1>
+
+    <!-- RESUMEN -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3 shadow">
+                <div class="card-header">Gasto Total del Mes</div>
+                <div class="card-body">
+                    <h4 class="card-title">$0.00</h4>
+                    <p class="card-text">Suma de todos los gastos registrados.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3 shadow">
+                <div class="card-header">Entradas Totales</div>
+                <div class="card-body">
+                    <h4 class="card-title">$0.00</h4>
+                    <p class="card-text">Total de ingresos registrados en el mes.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-white bg-dark mb-3 shadow">
+                <div class="card-header">Saldo Disponible</div>
+                <div class="card-body">
+                    <h4 class="card-title">$0.00</h4>
+                    <p class="card-text">Ingresos - Gastos del mes actual.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVEGACIÓN A FUNCIONES -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm h-100">
+                <h5>Categorías</h5>
+                <p>Crear, editar y asignar porcentajes de gasto.</p>
+                <a class="btn btn-outline-primary" asp-controller="Categorias" asp-action="Index">Gestionar</a>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm h-100">
+                <h5>Registrar Gasto</h5>
+                <p>Ingresa un nuevo gasto por categoría y fecha.</p>
+                <a class="btn btn-outline-danger" href="#">Registrar</a>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm h-100">
+                <h5>Registrar Entrada</h5>
+                <p>Agrega una entrada de dinero mensual.</p>
+                <a class="btn btn-outline-success" href="#">Registrar</a>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm h-100">
+                <h5>Reportes</h5>
+                <p>Visualiza los gastos diarios, semanales, mensuales.</p>
+                <a class="btn btn-outline-secondary" href="#">Ver Reportes</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ESPACIO PARA FUTURAS GRÁFICAS -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card p-4 shadow-sm">
+                <h5>Visualización de Datos (Próximamente)</h5>
+                <p>Aquí se podrá mostrar una gráfica con la evolución de gastos por categoría, mes y total.</p>
+                <div class="text-center text-muted py-5">[Gráfico de barras o pastel en desarrollo]</div>
+            </div>
+        </div>
+    </div>
 </div>
+
