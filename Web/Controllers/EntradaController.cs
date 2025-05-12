@@ -5,14 +5,17 @@ using MiniProyecto2.Web.Models;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using MvcTemplate.Models;    
+using MvcTemplate.Data;
 
-namespace MiniProyecto2.Web.Controllers
+
+namespace MvcTemplate.Controllers
 {
     public class EntradaController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly MvcTemplate.Data.ApplicationDbContext _context;
 
-        public EntradaController(ApplicationDbContext context)
+        public EntradaController(MvcTemplate.Data.ApplicationDbContext context)
         {
             _context = context;
         }
@@ -22,6 +25,7 @@ namespace MiniProyecto2.Web.Controllers
         {
             var entradas = await _context.Entradas.OrderByDescending(e => e.Fecha).ToListAsync();
             ViewBag.Total = entradas.Sum(e => e.Monto);
+
             return View(entradas);
         }
 

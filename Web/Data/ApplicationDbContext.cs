@@ -2,8 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using MiniProyecto2.Web.Models;
 using MvcTemplate.Models;
+using MvcTemplate.Data;
 
-namespace MiniProyecto2.Web.Data
+namespace MvcTemplate.Data
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
@@ -13,7 +14,7 @@ namespace MiniProyecto2.Web.Data
         }
 
         public DbSet<Categoria> Categorias { get; set; }
-        public DbSet<Gasto> Gastos { get; set; }
+      
         public DbSet<Entrada> Entradas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
