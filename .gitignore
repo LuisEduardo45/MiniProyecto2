@@ -1,12 +1,57 @@
 ﻿################################################################################
-# Este archivo .gitignore ha sido creado automáticamente por Microsoft(R) Visual Studio.
+# .gitignore para proyectos .NET / Visual Studio
+# Adaptado para soluciones con múltiples proyectos, pruebas, y uso de paquetes NuGet
 ################################################################################
 
-/.vs
-/Domain/Domain/obj
-/Infrastructure/obj
-/Services/obj
-/Test/UnitTest/bin/Debug/net9.0
-/Test/UnitTest/obj
-/Web/.vs
-/Web/obj
+# Archivos y carpetas de compilación
+bin/
+obj/
+
+# Archivos de configuración de usuario de Visual Studio
+*.user
+*.suo
+
+# Archivos de entorno de Visual Studio
+.vs/
+.vscode/
+
+# Rider
+.idea/
+
+# Archivos temporales
+*.log
+*.tmp
+*.bak
+
+# Carpeta de paquetes NuGet local (si llegara a existir)
+.nuget/
+packages/
+
+# Resultados de pruebas
+TestResults/
+coverage/
+*.coverage
+
+# Archivos de bloqueo antiguos
+project.lock.json
+project.fragment.lock.json
+
+# Archivos de publicación
+publish/
+*.dbmdl
+
+# Base de datos local o archivos sensibles generados por herramientas
+*.mdf
+*.ldf
+*.sqlite
+*.db
+
+# Configuración de herramientas locales (por ejemplo, dotnet tools)
+.tools/
+tool-manifest.json
+
+# Configuraciones de usuario específicas de cada entorno
+*.swp
+*.DS_Store
+Thumbs.db
+Desktop.ini
