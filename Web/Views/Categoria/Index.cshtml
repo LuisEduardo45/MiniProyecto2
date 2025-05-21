@@ -1,28 +1,32 @@
-﻿@model IEnumerable<MvcTemplate.Models.Categoria>
-
+﻿@model List<MvcTemplate.Models.Categoria>
 @{
     ViewData["Title"] = "Categorías";
 }
 
 <h2>Categorías</h2>
 
-<a asp-action="Create" class="btn btn-success mb-3">+ Nueva Categoría</a>
+<a asp-action="Create" class="btn btn-primary mb-3">Crear nueva categoría</a>
 
-<table class="table table-bordered table-striped">
-    <thead class="table-dark">
+<table class="table table-striped">
+    <thead>
         <tr>
             <th>Título</th>
             <th>Descripción</th>
-            <th>% Máximo</th>
+            <th>Porcentaje Máximo</th>
+            <th>Acciones</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @foreach (var cat in Model)
         {
             <tr>
-                <td>@item.Titulo</td>
-                <td>@item.Descripcion</td>
-                <td>@item.PorcentajeMaximo%</td>
+                <td>@cat.Titulo</td>
+                <td>@cat.Descripcion</td>
+                <td>@cat.PorcentajeMaximo %</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@cat.Id" class="btn btn-warning btn-sm">Editar</a>
+                    <a asp-action="Delete" asp-route-id="@cat.Id" class="btn btn-danger btn-sm">Eliminar</a>
+                </td>
             </tr>
         }
     </tbody>

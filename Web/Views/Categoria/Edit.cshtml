@@ -1,4 +1,35 @@
-﻿@page
-@model MvcTemplate.Views.Categoria.EditModel
+﻿@model MvcTemplate.Models.Categoria
+
 @{
+    ViewData["Title"] = "Editar Categoría";
+}
+
+<h2 class="mb-4">Editar Categoría</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="Titulo" class="form-label"></label>
+        <input asp-for="Titulo" class="form-control" />
+        <span asp-validation-for="Titulo" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Descripcion" class="form-label"></label>
+        <textarea asp-for="Descripcion" class="form-control"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="PorcentajeMaximo" class="form-label">Porcentaje máximo (%)</label>
+        <input asp-for="PorcentajeMaximo" class="form-control" type="number" min="0" max="100" />
+        <span asp-validation-for="PorcentajeMaximo" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Guardar Cambios</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
 }

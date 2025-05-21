@@ -1,4 +1,29 @@
-﻿@page
-@model MvcTemplate.Views.Categoria.deleteModel
+﻿@model MvcTemplate.Models.Categoria
+
 @{
+    ViewData["Title"] = "Eliminar Categoría";
 }
+
+<h2 class="mb-4 text-danger">¿Estás seguro que deseas eliminar esta categoría?</h2>
+
+<div class="card p-3 border-danger mb-3">
+    <dl class="row">
+        <dt class="col-sm-3">Título</dt>
+        <dd class="col-sm-9">@Model.Titulo</dd>
+
+        <dt class="col-sm-3">Descripción</dt>
+        <dd class="col-sm-9">@Model.Descripcion</dd>
+
+        <dt class="col-sm-3">Porcentaje Máximo</dt>
+        <dd class="col-sm-9">@Model.PorcentajeMaximo %</dd>
+    </dl>
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">
+        <i class="fa fa-trash"></i> Confirmar Eliminación
+    </button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
