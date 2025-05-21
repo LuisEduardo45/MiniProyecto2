@@ -1,4 +1,30 @@
-﻿@page
-@model MvcTemplate.Views.Entrada.CreateModel
+﻿@model MiniProyecto2.Web.Models.Entrada
+
 @{
+    ViewData["Title"] = "Agregar Nueva Entrada";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Create" method="post">
+    <div class="form-group mb-3">
+        <label asp-for="Monto" class="form-label"></label>
+        <input asp-for="Monto" class="form-control" />
+        <span asp-validation-for="Monto" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Descripcion" class="form-label"></label>
+        <input asp-for="Descripcion" class="form-control" />
+        <span asp-validation-for="Descripcion" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary ms-2">Cancelar</a>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

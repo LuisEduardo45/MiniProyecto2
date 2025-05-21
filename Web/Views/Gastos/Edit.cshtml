@@ -1,0 +1,25 @@
+﻿@model MvcTemplate.Models.Gasto
+
+@{
+    ViewData["Title"] = "Editar Gasto";
+}
+
+<h2>Editar Gasto</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+    <div class="form-group">
+        <label asp-for="Descripcion"></label>
+        <input asp-for="Descripcion" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="Monto"></label>
+        <input asp-for="Monto" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="Fecha"></label>
+        <input asp-for="Fecha" type="date" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-success">Guardar Cambios</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

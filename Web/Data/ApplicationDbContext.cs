@@ -17,6 +17,8 @@ namespace MvcTemplate.Data
       
         public DbSet<Entrada> Entradas { get; set; }
 
+        public DbSet<Gasto> Gastos { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

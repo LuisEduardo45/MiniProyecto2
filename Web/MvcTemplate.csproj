@@ -83,6 +83,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -91,7 +92,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Views\Gastos\" />
     <Folder Include="Views\NewFolder1\" />
     <Folder Include="Views\NewFolder\" />
   </ItemGroup>

@@ -1,4 +1,28 @@
-﻿@page
-@model MvcTemplate.Views.Entrada.DeleteModel
+﻿@model MiniProyecto2.Web.Models.Entrada
+
 @{
+    ViewData["Title"] = "Eliminar Entrada";
 }
+
+<h2>@ViewData["Title"]</h2>
+
+<h4>¿Seguro que quieres eliminar esta entrada?</h4>
+
+<div>
+    <dl class="row">
+        <dt class="col-sm-2">Monto</dt>
+        <dd class="col-sm-10">$@Model.Monto</dd>
+
+        <dt class="col-sm-2">Fecha</dt>
+        <dd class="col-sm-10">@Model.Fecha.ToShortDateString()</dd>
+
+        <dt class="col-sm-2">Descripción</dt>
+        <dd class="col-sm-10">@Model.Descripcion</dd>
+    </dl>
+
+    <form asp-action="Delete" method="post">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Cancelar</a>
+    </form>
+</div>

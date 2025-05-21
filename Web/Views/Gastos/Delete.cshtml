@@ -1,0 +1,26 @@
+﻿@model MvcTemplate.Models.Gasto
+
+@{
+    ViewData["Title"] = "Eliminar Gasto";
+}
+
+<h2 class="text-danger">¿Deseas eliminar este gasto?</h2>
+
+<div class="card p-3 border-danger mb-3">
+    <dl class="row">
+        <dt class="col-sm-3">Descripción</dt>
+        <dd class="col-sm-9">@Model.Descripcion</dd>
+
+        <dt class="col-sm-3">Monto</dt>
+        <dd class="col-sm-9">$@Model.Monto</dd>
+
+        <dt class="col-sm-3">Fecha</dt>
+        <dd class="col-sm-9">@Model.Fecha.ToShortDateString()</dd>
+    </dl>
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Confirmar Eliminación</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
