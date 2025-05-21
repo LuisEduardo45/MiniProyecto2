@@ -7,28 +7,30 @@
 <h1>Entradas</h1>
 
 <p>
-    <a class="btn btn-primary" asp-action="Create">Crear Nueva Entrada</a>
+    <a asp-action="Create" class="btn btn-primary">Crear nueva</a>
 </p>
 
-<table class="table table-striped">
+<table class="table table-bordered">
     <thead>
         <tr>
             <th>Descripción</th>
             <th>Valor</th>
             <th>Fecha</th>
+            <th>Categoría</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @foreach (var entrada in Model)
         {
             <tr>
-                <td>@item.Descripcion</td>
-                <td>@item.Valor.ToString("C")</td>
-                <td>@item.Fecha.ToShortDateString()</td>
+                <td>@entrada.Descripcion</td>
+                <td>@entrada.Valor.ToString("C")</td>
+                <td>@entrada.Fecha.ToShortDateString()</td>
+                <td>@entrada.Categoria?.Titulo</td>
                 <td>
-                    <a class="btn btn-warning btn-sm" asp-action="Edit" asp-route-id="@item.Id">Editar</a>
-                    <a class="btn btn-danger btn-sm" asp-action="Delete" asp-route-id="@item.Id">Eliminar</a>
+                    <a asp-action="Edit" asp-route-id="@entrada.Id" class="btn btn-sm btn-warning">Editar</a>
+                    <a asp-action="Delete" asp-route-id="@entrada.Id" class="btn btn-sm btn-danger">Eliminar</a>
                 </td>
             </tr>
         }
