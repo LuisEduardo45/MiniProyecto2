@@ -4,8 +4,6 @@ using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Services.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.Authorization;
 
 namespace MvcTemplate;
 
@@ -15,11 +13,9 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Agrega ApplicationDbContext explícitamente
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-        // Add services to the container.
         var mappingConfiguration = new MapperConfiguration(m => m.AddProfile(new MProfile()));
         IMapper mapper = mappingConfiguration.CreateMapper();
         builder.Services.AddSingleton(mapper);
@@ -29,16 +25,9 @@ public class Program
         builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
             .AddEntityFrameworkStores<ApplicationDbContext>();
 
-        // 👇 Política global: todas las páginas requieren estar autenticado
-        builder.Services.AddControllersWithViews(options =>
-        {
-            var policy = new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .Build();
-            options.Filters.Add(new AuthorizeFilter(policy));
-        });
+        // ❌ Eliminamos política de autorización global
+        builder.Services.AddControllersWithViews();
 
-        // 👇 Redirecciona automáticamente al login si no ha iniciado sesión
         builder.Services.ConfigureApplicationCookie(options =>
         {
             options.LoginPath = "/Identity/Account/Login";
@@ -46,7 +35,6 @@ public class Program
 
         var app = builder.Build();
 
-        // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
             app.UseMigrationsEndPoint();
@@ -60,7 +48,6 @@ public class Program
         app.UseHttpsRedirection();
         app.UseRouting();
 
-        // 👇 Aquí agregamos la autenticación antes que la autorización
         app.UseAuthentication();
         app.UseAuthorization();
 
