@@ -1,27 +1,34 @@
-﻿@model IEnumerable<MiniProyecto2.Web.Models.Entrada>
+﻿@model IEnumerable<MvcTemplate.Models.Entrada>
 
-<h2>Entradas</h2>
-<p>Total: @ViewBag.Total</p>
-<a asp-action="Create" class="btn btn-primary">Nueva Entrada</a>
+@{
+    ViewData["Title"] = "Entradas";
+}
 
-<table class="table">
+<h1>Entradas</h1>
+
+<p>
+    <a class="btn btn-primary" asp-action="Create">Crear Nueva Entrada</a>
+</p>
+
+<table class="table table-striped">
     <thead>
         <tr>
-            <th>Monto</th>
-            <th>Fecha</th>
             <th>Descripción</th>
+            <th>Valor</th>
+            <th>Fecha</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var entrada in Model)
+        @foreach (var item in Model)
         {
             <tr>
-                <td>@entrada.Monto</td>
-                <td>@entrada.Fecha.ToShortDateString()</td>
-                <td>@entrada.Descripcion</td>
+                <td>@item.Descripcion</td>
+                <td>@item.Valor.ToString("C")</td>
+                <td>@item.Fecha.ToShortDateString()</td>
                 <td>
-                    <a asp-action="Delete" asp-route-id="@entrada.Id">Eliminar</a>
+                    <a class="btn btn-warning btn-sm" asp-action="Edit" asp-route-id="@item.Id">Editar</a>
+                    <a class="btn btn-danger btn-sm" asp-action="Delete" asp-route-id="@item.Id">Eliminar</a>
                 </td>
             </tr>
         }

@@ -1,0 +1,35 @@
+﻿@model IEnumerable<MvcTemplate.Models.Gasto>
+
+<h1>Listado de Gastos</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Descripción</th>
+            <th>Monto</th>
+            <th>Fecha</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var gasto in Model)
+        {
+            <tr>
+                <td>@gasto.Id</td>
+                <td>@gasto.Descripcion</td>
+                <td>@gasto.Monto</td>
+                <td>@gasto.Fecha.ToShortDateString()</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@gasto.Id">Editar</a> |
+                    <a asp-action="Delete" asp-route-id="@gasto.Id">Eliminar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="Create" class="btn btn-primary">Nuevo Gasto</a>
+
+
+

@@ -1,28 +1,34 @@
-﻿@model MiniProyecto2.Web.Models.Entrada
+﻿@model MvcTemplate.Models.Entrada
 
 @{
     ViewData["Title"] = "Eliminar Entrada";
 }
 
-<h2>@ViewData["Title"]</h2>
+<h1 class="text-danger">Eliminar Entrada</h1>
 
-<h4>¿Seguro que quieres eliminar esta entrada?</h4>
+<h4>¿Estás seguro de que deseas eliminar esta entrada?</h4>
 
-<div>
+<hr />
+
+<div class="mb-3">
     <dl class="row">
-        <dt class="col-sm-2">Monto</dt>
-        <dd class="col-sm-10">$@Model.Monto</dd>
+        <dt class="col-sm-3">Descripción</dt>
+        <dd class="col-sm-9">@Model.Descripcion</dd>
 
-        <dt class="col-sm-2">Fecha</dt>
-        <dd class="col-sm-10">@Model.Fecha.ToShortDateString()</dd>
+        <dt class="col-sm-3">Valor</dt>
+        <dd class="col-sm-9">@Model.Valor.ToString("C")</dd>
 
-        <dt class="col-sm-2">Descripción</dt>
-        <dd class="col-sm-10">@Model.Descripcion</dd>
+        <dt class="col-sm-3">Fecha</dt>
+        <dd class="col-sm-9">@Model.Fecha.ToShortDateString()</dd>
+
+        <dt class="col-sm-3">Categoría</dt>
+        <dd class="col-sm-9">@Model.Categoria?.Nombre</dd>
     </dl>
-
-    <form asp-action="Delete" method="post">
-        <input type="hidden" asp-for="Id" />
-        <button type="submit" class="btn btn-danger">Eliminar</button>
-        <a asp-action="Index" class="btn btn-secondary ms-2">Cancelar</a>
-    </form>
 </div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger me-2">Eliminar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+

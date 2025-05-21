@@ -1,17 +1,30 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MiniProyecto2.Web.Models
+namespace MvcTemplate.Models
 {
     public class Entrada
     {
         public int Id { get; set; }
 
         [Required]
-        [Range(0.01, double.MaxValue)]
-        public decimal Monto { get; set; }
+        public string Descripcion { get; set; }
 
-        public DateTime Fecha { get; set; } = DateTime.Now;
+        [Required]
+        [DataType(DataType.Currency)]
+        public decimal Valor { get; set; }
 
-        public string? Descripcion { get; set; }
+        [Required]
+        [DataType(DataType.Date)]
+        public DateTime Fecha { get; set; }
+
+        // Relación con la Categoría
+        [Display(Name = "Categoría")]
+        public int CategoriaId { get; set; }
+
+        [ForeignKey("CategoriaId")]
+        public Categoria Categoria { get; set; }
     }
 }
+

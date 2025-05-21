@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MvcTemplate.Data;
 using MvcTemplate.Models;
 using System.Linq;
 
@@ -7,88 +6,88 @@ namespace MvcTemplate.Controllers
 {
     public class GastoController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private static List<Gasto> _gastos = new List<Gasto>();
 
-        public GastoController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
-        // GET: Gasto
+        // LISTAR
         public IActionResult Index()
         {
-            var gastos = _context.Gastos.ToList();
-            return View(gastos); // Busca Views/Gasto/Index.cshtml
+            return View(_gastos);
         }
 
-        // GET: Gasto/Create
+        // CREAR (GET)
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Gasto/Create
+        // CREAR (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(Gasto gasto)
         {
             if (ModelState.IsValid)
             {
-                _context.Gastos.Add(gasto);
-                _context.SaveChanges();
+                gasto.Id = _gastos.Count > 0 ? _gastos.Max(g => g.Id) + 1 : 1;
+                _gastos.Add(gasto);
                 return RedirectToAction(nameof(Index));
             }
+
             return View(gasto);
         }
 
-        // GET: Gasto/Edit/5
+        // EDITAR (GET)
         public IActionResult Edit(int id)
         {
-            var gasto = _context.Gastos.Find(id);
+            var gasto = _gastos.FirstOrDefault(g => g.Id == id);
             if (gasto == null)
                 return NotFound();
 
             return View(gasto);
         }
 
-        // POST: Gasto/Edit/5
+        // EDITAR (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(Gasto gasto)
         {
+            var existente = _gastos.FirstOrDefault(g => g.Id == gasto.Id);
+            if (existente == null)
+                return NotFound();
+
             if (ModelState.IsValid)
             {
-                _context.Gastos.Update(gasto);
-                _context.SaveChanges();
+                existente.Descripcion = gasto.Descripcion;
+                existente.Monto = gasto.Monto;
+                existente.Fecha = gasto.Fecha;
                 return RedirectToAction(nameof(Index));
             }
+
             return View(gasto);
         }
 
-        // GET: Gasto/Delete/5
+        // ELIMINAR (GET) - Confirmación
         public IActionResult Delete(int id)
         {
-            var gasto = _context.Gastos.FirstOrDefault(g => g.Id == id);
+            var gasto = _gastos.FirstOrDefault(g => g.Id == id);
             if (gasto == null)
                 return NotFound();
 
             return View(gasto);
         }
 
-        // POST: Gasto/Delete/5
+        // ELIMINAR (POST) - Acción real
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
-            var gasto = _context.Gastos.Find(id);
-            if (gasto != null)
-            {
-                _context.Gastos.Remove(gasto);
-                _context.SaveChanges();
-            }
+            var gasto = _gastos.FirstOrDefault(g => g.Id == id);
+            if (gasto == null)
+                return NotFound();
 
+            _gastos.Remove(gasto);
             return RedirectToAction(nameof(Index));
         }
     }
 }
+
 

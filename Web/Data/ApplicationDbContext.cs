@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using MiniProyecto2.Web.Models;
 using MvcTemplate.Models;
 using MvcTemplate.Data;
 
