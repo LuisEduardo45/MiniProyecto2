@@ -1,13 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MvcTemplate.Models;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace MvcTemplate.Controllers
 {
     public class GastoController : Controller
     {
-
-
         // Lista estática de categorías, igual a la que usas en CategoriaController
         private static List<Categoria> _categorias = new List<Categoria>
         {
@@ -17,10 +16,20 @@ namespace MvcTemplate.Controllers
         };
 
         // Lista estática de gastos
-        private static List<Gasto> _gastos = new List<Gasto>();
+        public static List<Gasto> _gastos = new List<Gasto>();
 
-        // Simula entradas de dinero para calcular topes
-        private static decimal TotalEntradas = 1000000; // Ejemplo: un millón
+        // Acceso a la lista estática de entradas (compartida con EntradaController)
+        // Si EntradaController._entradas es internal/public static, puedes acceder así:
+        // Si no, hazla public static en EntradaController.
+        public static List<Entrada> _entradas => EntradaController._entradas;
+
+        // Calcula el total de entradas del mes dado
+        private static decimal TotalEntradasMes(int mes, int año)
+        {
+            return _entradas
+                .Where(e => e.Fecha.Month == mes && e.Fecha.Year == año)
+                .Sum(e => e.Valor);
+        }
 
         // LISTAR gastos con nombre de categoría
         public IActionResult Index()
@@ -55,8 +64,9 @@ namespace MvcTemplate.Controllers
                     return View(gasto);
                 }
 
-                // Calcular TopeMaximo de la categoría basado en el porcentaje
-                categoria.TopeMaximo = TotalEntradas * categoria.PorcentajeMaximo / 100;
+                // Calcular TopeMaximo de la categoría basado en el porcentaje y entradas del mes
+                var totalEntradas = TotalEntradasMes(gasto.Fecha.Month, gasto.Fecha.Year);
+                categoria.TopeMaximo = totalEntradas * categoria.PorcentajeMaximo / 100;
 
                 // Calcular gasto total actual de esa categoría en el mes y sumar el nuevo gasto
                 var gastoMesCategoria = _gastos
@@ -110,7 +120,9 @@ namespace MvcTemplate.Controllers
                     return View(gasto);
                 }
 
-                categoria.TopeMaximo = TotalEntradas * categoria.PorcentajeMaximo / 100;
+                // Calcular TopeMaximo de la categoría basado en el porcentaje y entradas del mes
+                var totalEntradas = TotalEntradasMes(gasto.Fecha.Month, gasto.Fecha.Year);
+                categoria.TopeMaximo = totalEntradas * categoria.PorcentajeMaximo / 100;
 
                 var gastoMesCategoria = _gastos
                     .Where(g => g.CategoriaId == categoria.Id && g.Fecha.Month == gasto.Fecha.Month && g.Fecha.Year == gasto.Fecha.Year && g.Id != gasto.Id)

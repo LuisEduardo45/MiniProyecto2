@@ -1,5 +1,13 @@
 ﻿@{
     ViewData["Title"] = "Inicio";
+    // Obtén los datos totales de entradas y gastos del mes actual
+    var totalEntradas = MvcTemplate.Controllers.EntradaController._entradas
+        .Where(e => e.Fecha.Month == DateTime.Now.Month && e.Fecha.Year == DateTime.Now.Year)
+        .Sum(e => e.Valor);
+    var totalGastos = MvcTemplate.Controllers.GastoController._gastos
+        .Where(g => g.Fecha.Month == DateTime.Now.Month && g.Fecha.Year == DateTime.Now.Year)
+        .Sum(g => g.Monto);
+    var saldo = totalEntradas - totalGastos;
 }
 
 <div class="container mt-5">
@@ -11,7 +19,7 @@
             <div class="card text-white bg-primary mb-3 shadow">
                 <div class="card-header">Gastos Total del mes</div>
                 <div class="card-body">
-                    <h4 class="card-title">$0.00</h4>
+                    <h4 class="card-title">@totalGastos.ToString("C")</h4>
                     <p class="card-text">Suma de todos los gastos registrados.</p>
                 </div>
             </div>
@@ -21,7 +29,7 @@
             <div class="card text-white bg-success mb-3 shadow">
                 <div class="card-header">Entradas Totales</div>
                 <div class="card-body">
-                    <h4 class="card-title">$0.00</h4>
+                    <h4 class="card-title">@totalEntradas.ToString("C")</h4>
                     <p class="card-text">Total de ingresos registrados en el mes.</p>
                 </div>
             </div>
@@ -31,7 +39,7 @@
             <div class="card text-white bg-dark mb-3 shadow">
                 <div class="card-header">Saldo Disponible</div>
                 <div class="card-body">
-                    <h4 class="card-title">$0.00</h4>
+                    <h4 class="card-title">@saldo.ToString("C")</h4>
                     <p class="card-text">Ingresos - Gastos del mes actual.</p>
                 </div>
             </div>
@@ -52,7 +60,7 @@
             <div class="card p-3 shadow-sm h-100">
                 <h5>Registrar Gasto</h5>
                 <p>Ingresa un nuevo gasto por categoría y fecha.</p>
-                <a class="btn btn-outline-danger" href="#">Registrar</a>
+                <a class="btn btn-outline-danger" asp-controller="Gasto" asp-action="Create">Registrar</a>
             </div>
         </div>
 
@@ -60,7 +68,7 @@
             <div class="card p-3 shadow-sm h-100">
                 <h5>Registrar Entrada</h5>
                 <p>Agrega una entrada de dinero mensual.</p>
-                <a class="btn btn-outline-success" href="#">Registrar</a>
+                <a class="btn btn-outline-success" asp-controller="Entrada" asp-action="Create">Registrar</a>
             </div>
         </div>
 
@@ -84,4 +92,3 @@
         </div>
     </div>
 </div>
-
