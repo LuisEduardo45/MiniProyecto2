@@ -9,6 +9,7 @@
             <th>Descripción</th>
             <th>Monto</th>
             <th>Fecha</th>
+            <th>Categoría</th>
             <th>Acciones</th>
         </tr>
     </thead>
@@ -18,8 +19,9 @@
             <tr>
                 <td>@gasto.Id</td>
                 <td>@gasto.Descripcion</td>
-                <td>@gasto.Monto</td>
+                <td>@gasto.Monto.ToString("C")</td>
                 <td>@gasto.Fecha.ToShortDateString()</td>
+                <td>@gasto.Categoria?.Titulo</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@gasto.Id">Editar</a> |
                     <a asp-action="Delete" asp-route-id="@gasto.Id">Eliminar</a>
@@ -30,6 +32,7 @@
 </table>
 
 <a asp-action="Create" class="btn btn-primary">Nuevo Gasto</a>
+
 
 
 
