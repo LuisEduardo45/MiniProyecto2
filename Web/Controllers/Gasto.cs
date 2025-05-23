@@ -8,7 +8,7 @@ namespace MvcTemplate.Controllers
     public class GastoController : Controller
     {
         // Lista estática de categorías, igual a la que usas en CategoriaController
-        public static List<Categoria> _categorias = new List<Categoria>
+        private static List<Categoria> _categorias = new List<Categoria>
         {
             new Categoria { Id = 1, Titulo = "Alimentación", TopeMaximo = 0, PorcentajeMaximo = 30, Activa = true },
             new Categoria { Id = 2, Titulo = "Transporte", TopeMaximo = 0, PorcentajeMaximo = 20, Activa = true },
