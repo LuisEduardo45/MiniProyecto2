@@ -1,20 +1,23 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using MvcTemplate.Data;
 using MvcTemplate.Models;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace MvcTemplate.Controllers
 {
     public class EntradaController : Controller
     {
-        // Lista estática de entradas (compartida)
-        public static List<Entrada> _entradas = new List<Entrada>();
+        private readonly ApplicationDbContext _context;
+
+        public EntradaController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
         // GET: Entrada
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var entradas = _entradas.OrderByDescending(e => e.Fecha).ToList();
-            return View(entradas);
+            return View(await _context.Entradas.OrderByDescending(e => e.Fecha).ToListAsync());
         }
 
         // GET: Entrada/Create
@@ -26,55 +29,67 @@ namespace MvcTemplate.Controllers
         // POST: Entrada/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Entrada entrada)
+        public async Task<IActionResult> Create(Entrada entrada)
         {
             if (ModelState.IsValid)
             {
-                entrada.Id = _entradas.Count > 0 ? _entradas.Max(e => e.Id) + 1 : 1;
-                _entradas.Add(entrada);
+                // 1. Guardar entrada global
+                _context.Entradas.Add(entrada);
+                await _context.SaveChangesAsync();
+
+                // 2. Obtener categorías activas
+                var categorias = await _context.Categorias
+                    .Where(c => !c.Activa)
+                    .ToListAsync();
+
+                // 3. Validar suma de porcentajes
+                var totalPorcentaje = categorias.Sum(c => c.PorcentajeMaximo);
+                if (totalPorcentaje != 1.0m)
+                {
+                    ModelState.AddModelError("", "La suma de los porcentajes de categorías debe ser exactamente 100%.");
+                    return View(entrada);
+                }
+
+                // 4. Distribuir monto
+                foreach (var categoria in categorias)
+                {
+                    var montoAsignado = entrada.Valor * categoria.PorcentajeMaximo;
+
+                    var gasto = new Gasto
+                    {
+                        CategoriaId = categoria.Id,
+                        Monto = montoAsignado,
+                        Fecha = entrada.Fecha,
+                        Descripcion = $"Distribución automática de entrada #{entrada.Id}"
+                    };
+
+                    _context.Gastos.Add(gasto);
+                }
+
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
             return View(entrada);
         }
 
-        // GET: Entrada/Edit/5
-        public IActionResult Edit(int? id)
+        // GET: Entrada/Details/5
+        public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
 
-            var entrada = _entradas.FirstOrDefault(e => e.Id == id);
+            var entrada = await _context.Entradas.FirstOrDefaultAsync(m => m.Id == id);
             if (entrada == null) return NotFound();
 
             return View(entrada);
         }
 
-        // POST: Entrada/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, Entrada entrada)
-        {
-            if (id != entrada.Id) return NotFound();
-
-            if (ModelState.IsValid)
-            {
-                var existente = _entradas.FirstOrDefault(e => e.Id == id);
-                if (existente == null) return NotFound();
-
-                existente.Descripcion = entrada.Descripcion;
-                existente.Valor = entrada.Valor;
-                existente.Fecha = entrada.Fecha;
-
-                return RedirectToAction(nameof(Index));
-            }
-            return View(entrada);
-        }
-
         // GET: Entrada/Delete/5
-        public IActionResult Delete(int? id)
+        public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
 
-            var entrada = _entradas.FirstOrDefault(e => e.Id == id);
+            var entrada = await _context.Entradas.FirstOrDefaultAsync(m => m.Id == id);
             if (entrada == null) return NotFound();
 
             return View(entrada);
@@ -83,13 +98,15 @@ namespace MvcTemplate.Controllers
         // POST: Entrada/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var entrada = _entradas.FirstOrDefault(e => e.Id == id);
+            var entrada = await _context.Entradas.FindAsync(id);
             if (entrada != null)
             {
-                _entradas.Remove(entrada);
+                _context.Entradas.Remove(entrada);
+                await _context.SaveChangesAsync();
             }
+
             return RedirectToAction(nameof(Index));
         }
     }

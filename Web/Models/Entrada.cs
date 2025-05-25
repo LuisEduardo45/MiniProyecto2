@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace MvcTemplate.Models
 {
@@ -19,12 +20,7 @@ namespace MvcTemplate.Models
         [DataType(DataType.Date)]
         public DateTime Fecha { get; set; }
 
-        // Relación con la Categoría
-        [Display(Name = "Categoría")]
-        public int CategoriaId { get; set; }
-
-        [ForeignKey("CategoriaId")]
-        public Categoria Categoria { get; set; }
+ 
     }
 }
 
