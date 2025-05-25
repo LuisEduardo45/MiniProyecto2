@@ -1,0 +1,62 @@
+﻿@{
+    ViewData["Title"] = "Reportes de Gastos";
+
+    var gastoTotal = (decimal)ViewData["GastoTotal"];
+    var gastoMensual = (decimal)ViewData["GastoMensual"];
+    var gastoSemanal = (decimal)ViewData["GastoSemanal"];
+    var gastoDiario = (decimal)ViewData["GastoDiario"];
+}
+
+<div class="container mt-5">
+    <h1 class="mb-4">Reportes de Gastos</h1>
+
+    <!-- RESUMEN DE GASTOS -->
+    <div class="row mb-4 d-flex align-items-stretch">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3 shadow h-100">
+                <div class="card-header">Gasto Total</div>
+                <div class="card-body d-flex flex-column">
+                    <h4 class="card-title">@gastoTotal.ToString("C")</h4>
+                    <p class="card-text mt-auto">Suma de todos los gastos registrados.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3 shadow h-100">
+                <div class="card-header">Gasto Mensual</div>
+                <div class="card-body d-flex flex-column">
+                    <h4 class="card-title">@gastoMensual.ToString("C")</h4>
+                    <p class="card-text mt-auto">Gastos realizados este mes.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3 shadow h-100">
+                <div class="card-header">Gasto Semanal</div>
+                <div class="card-body d-flex flex-column">
+                    <h4 class="card-title">@gastoSemanal.ToString("C")</h4>
+                    <p class="card-text mt-auto">Gastos desde el lunes hasta hoy.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-danger mb-3 shadow h-100">
+                <div class="card-header">Gasto Diario</div>
+                <div class="card-body d-flex flex-column">
+                    <h4 class="card-title">@gastoDiario.ToString("C")</h4>
+                    <p class="card-text mt-auto">Gastos del día de hoy.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTÓN DE REGRESO -->
+    <div class="text-end">
+        <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index">Volver al Panel</a>
+    </div>
+</div>
+
+

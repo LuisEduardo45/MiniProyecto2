@@ -2,9 +2,11 @@
 using MvcTemplate.Models;
 using MvcTemplate.Data; // Contexto de BD
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MvcTemplate.Controllers
 {
+    [Authorize]
     public class CategoriaController : Controller
     {
         private readonly ApplicationDbContext _context;

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MvcTemplate.Data;
 using System;
@@ -5,6 +6,7 @@ using System.Linq;
 
 namespace MvcTemplate.Controllers
 {
+    [Authorize] // Solo usuarios autenticados pueden acceder
     public class HomeController : Controller
     {
         private readonly ApplicationDbContext _context;
