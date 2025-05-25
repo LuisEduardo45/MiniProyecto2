@@ -1,17 +1,24 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MvcTemplate.Models;
+using MvcTemplate.Data; // Contexto de BD
 using System.Linq;
 
 namespace MvcTemplate.Controllers
 {
     public class CategoriaController : Controller
     {
-        private static List<Categoria> _categorias = new List<Categoria>();
+        private readonly ApplicationDbContext _context;
+
+        public CategoriaController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
         // LISTADO
         public IActionResult Index()
         {
-            return View(_categorias);
+            var categorias = _context.Categorias.ToList();
+            return View(categorias);
         }
 
         // CREAR (GET)
@@ -27,8 +34,12 @@ namespace MvcTemplate.Controllers
         {
             if (ModelState.IsValid)
             {
-                categoria.Id = _categorias.Count > 0 ? _categorias.Max(c => c.Id) + 1 : 1;
-                _categorias.Add(categoria);
+                // Valores por defecto
+                categoria.Activa = true;
+               // categoria.TopeMaximo = 0;
+
+                _context.Categorias.Add(categoria);
+                _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
             return View(categoria);
@@ -37,7 +48,7 @@ namespace MvcTemplate.Controllers
         // EDITAR (GET)
         public IActionResult Edit(int id)
         {
-            var categoria = _categorias.FirstOrDefault(c => c.Id == id);
+            var categoria = _context.Categorias.FirstOrDefault(c => c.Id == id);
             if (categoria == null)
                 return NotFound();
 
@@ -49,43 +60,46 @@ namespace MvcTemplate.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(Categoria categoria)
         {
-            var categoriaExistente = _categorias.FirstOrDefault(c => c.Id == categoria.Id);
-            if (categoriaExistente == null)
-                return NotFound();
-
             if (ModelState.IsValid)
             {
+                var categoriaExistente = _context.Categorias.FirstOrDefault(c => c.Id == categoria.Id);
+                if (categoriaExistente == null)
+                    return NotFound();
+
                 categoriaExistente.Titulo = categoria.Titulo;
                 categoriaExistente.Descripcion = categoria.Descripcion;
                 categoriaExistente.PorcentajeMaximo = categoria.PorcentajeMaximo;
 
+                _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
-
             return View(categoria);
         }
 
-        // ELIMINAR (GET) - Confirmación
+        // ELIMINAR (GET)
         public IActionResult Delete(int id)
         {
-            var categoria = _categorias.FirstOrDefault(c => c.Id == id);
+            var categoria = _context.Categorias.FirstOrDefault(c => c.Id == id);
             if (categoria == null)
                 return NotFound();
 
             return View(categoria);
         }
 
-        // ELIMINAR (POST) - Acción real
+        // ELIMINAR (POST)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
-            var categoria = _categorias.FirstOrDefault(c => c.Id == id);
+            var categoria = _context.Categorias.FirstOrDefault(c => c.Id == id);
             if (categoria == null)
                 return NotFound();
 
-            _categorias.Remove(categoria);
+            _context.Categorias.Remove(categoria);
+            _context.SaveChanges();
             return RedirectToAction(nameof(Index));
         }
     }
 }
+
+

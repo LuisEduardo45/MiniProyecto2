@@ -12,10 +12,13 @@
         <dd class="col-sm-9">@Model.Descripcion</dd>
 
         <dt class="col-sm-3">Monto</dt>
-        <dd class="col-sm-9">$@Model.Monto</dd>
+        <dd class="col-sm-9">@Model.Monto.ToString("C")</dd>
 
         <dt class="col-sm-3">Fecha</dt>
         <dd class="col-sm-9">@Model.Fecha.ToShortDateString()</dd>
+
+        <dt class="col-sm-3">Categoría</dt>
+        <dd class="col-sm-9">@Model.Categoria?.Titulo</dd>
     </dl>
 </div>
 
@@ -24,4 +27,5 @@
     <button type="submit" class="btn btn-danger">Confirmar Eliminación</button>
     <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>
+
 

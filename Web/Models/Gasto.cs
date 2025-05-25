@@ -1,4 +1,6 @@
-﻿namespace MvcTemplate.Models
+﻿using System.ComponentModel.DataAnnotations;
+namespace MvcTemplate.Models
+
 {
     public class Gasto
     {
@@ -7,6 +9,7 @@
         public decimal Monto { get; set; }
         public DateTime Fecha { get; set; }
 
+        [Required(ErrorMessage = "La categoría es obligatoria")]
         public int CategoriaId { get; set; }  // Nueva propiedad para ligar gasto con categoría
         public Categoria Categoria { get; set; }
     }

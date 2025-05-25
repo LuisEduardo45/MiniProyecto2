@@ -4,6 +4,11 @@ using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Services.Common;
 using Microsoft.EntityFrameworkCore;
+using MvcTemplate.Data;
+
+// Alias para resolver ambigüedad
+using MvcTemplateDbContext = MvcTemplate.Data.ApplicationDbContext;
+using InfrastructureDbContext = Infrastructure.Repositories.ApplicationDbContext;
 
 namespace MvcTemplate;
 
@@ -13,7 +18,8 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        // Aquí usamos el alias para el DbContext correcto
+        builder.Services.AddDbContext<MvcTemplateDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
         var mappingConfiguration = new MapperConfiguration(m => m.AddProfile(new MProfile()));
@@ -23,7 +29,7 @@ public class Program
         builder.Services.AddServices(builder.Configuration);
 
         builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
-            .AddEntityFrameworkStores<ApplicationDbContext>();
+            .AddEntityFrameworkStores<MvcTemplateDbContext>();
 
         // ❌ Eliminamos política de autorización global
         builder.Services.AddControllersWithViews();
