@@ -18,6 +18,7 @@ namespace MvcTemplate.Controllers
         // LISTADO
         public IActionResult Index()
         {
+            // Incluimos la categoría para mostrar título
             var gastos = _context.Gastos.Include(g => g.Categoria).ToList();
             return View(gastos);
         }
@@ -25,6 +26,7 @@ namespace MvcTemplate.Controllers
         // CREAR (GET)
         public IActionResult Create()
         {
+            // Solo categorías activas para seleccionar
             ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
             return View();
         }
@@ -40,7 +42,6 @@ namespace MvcTemplate.Controllers
                 _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
-
             // Si hay error, recarga categorías para el dropdown
             ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
             return View(gasto);
@@ -53,6 +54,7 @@ namespace MvcTemplate.Controllers
             if (gasto == null)
                 return NotFound();
 
+            // Recargamos categorías activas para el dropdown
             ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
             return View(gasto);
         }
@@ -76,7 +78,7 @@ namespace MvcTemplate.Controllers
                 _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
-
+            // Recargamos categorías activas si hay error
             ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
             return View(gasto);
         }
@@ -106,4 +108,3 @@ namespace MvcTemplate.Controllers
         }
     }
 }
-

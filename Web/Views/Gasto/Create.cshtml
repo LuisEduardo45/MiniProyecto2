@@ -6,6 +6,9 @@
 
 <h2>Nuevo Gasto</h2>
 
+<!-- MOSTRAR ERRORES GENERALES -->
+<div asp-validation-summary="All" class="text-danger"></div>
+
 <form asp-action="Create" method="post">
     <div class="form-group">
         <label asp-for="Descripcion"></label>
@@ -23,7 +26,7 @@
         <span asp-validation-for="Fecha" class="text-danger"></span>
     </div>
     <div class="form-group">
-        <label>Categoría</label>
+        <label asp-for="CategoriaId">Categoría</label>
         <select asp-for="CategoriaId" asp-items="@(new SelectList(ViewBag.Categorias, "Id", "Titulo", Model?.CategoriaId))" class="form-control">
             <option value="">-- Seleccione una categoría --</option>
         </select>
@@ -34,7 +37,10 @@
 </form>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
+
 
 
