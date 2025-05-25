@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MvcTemplate.Data;
 using MvcTemplate.Models;
+using System;
 using System.Linq;
+using System.Security.Claims;
 
 namespace MvcTemplate.Controllers
 {
@@ -20,15 +22,20 @@ namespace MvcTemplate.Controllers
         // LISTADO
         public IActionResult Index()
         {
-            // Incluimos la categoría para mostrar título
-            var gastos = _context.Gastos.Include(g => g.Categoria).ToList();
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            // Mostrar solo los gastos del usuario autenticado
+            var gastos = _context.Gastos
+                .Include(g => g.Categoria)
+                .Where(g => g.UsuarioId == userId)
+                .ToList();
+
             return View(gastos);
         }
 
         // CREAR (GET)
         public IActionResult Create()
         {
-            // Solo categorías activas para seleccionar
             ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
             return View();
         }
@@ -40,11 +47,13 @@ namespace MvcTemplate.Controllers
         {
             if (ModelState.IsValid)
             {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                gasto.UsuarioId = userId;
                 _context.Gastos.Add(gasto);
                 _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
-            // Si hay error, recarga categorías para el dropdown
+
             ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
             return View(gasto);
         }
@@ -52,11 +61,12 @@ namespace MvcTemplate.Controllers
         // EDITAR (GET)
         public IActionResult Edit(int id)
         {
-            var gasto = _context.Gastos.FirstOrDefault(g => g.Id == id);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            var gasto = _context.Gastos.FirstOrDefault(g => g.Id == id && g.UsuarioId == userId);
             if (gasto == null)
                 return NotFound();
 
-            // Recargamos categorías activas para el dropdown
             ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
             return View(gasto);
         }
@@ -68,7 +78,9 @@ namespace MvcTemplate.Controllers
         {
             if (ModelState.IsValid)
             {
-                var gastoExistente = _context.Gastos.FirstOrDefault(g => g.Id == gasto.Id);
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+                var gastoExistente = _context.Gastos.FirstOrDefault(g => g.Id == gasto.Id && g.UsuarioId == userId);
                 if (gastoExistente == null)
                     return NotFound();
 
@@ -80,7 +92,7 @@ namespace MvcTemplate.Controllers
                 _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
-            // Recargamos categorías activas si hay error
+
             ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
             return View(gasto);
         }
@@ -88,7 +100,12 @@ namespace MvcTemplate.Controllers
         // ELIMINAR (GET)
         public IActionResult Delete(int id)
         {
-            var gasto = _context.Gastos.Include(g => g.Categoria).FirstOrDefault(g => g.Id == id);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            var gasto = _context.Gastos
+                .Include(g => g.Categoria)
+                .FirstOrDefault(g => g.Id == id && g.UsuarioId == userId);
+
             if (gasto == null)
                 return NotFound();
 
@@ -100,7 +117,9 @@ namespace MvcTemplate.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
-            var gasto = _context.Gastos.FirstOrDefault(g => g.Id == id);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            var gasto = _context.Gastos.FirstOrDefault(g => g.Id == id && g.UsuarioId == userId);
             if (gasto == null)
                 return NotFound();
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace MvcTemplate.Models
@@ -20,7 +21,11 @@ namespace MvcTemplate.Models
         [DataType(DataType.Date)]
         public DateTime Fecha { get; set; }
 
- 
+        public string UsuarioId { get; set; }  // Foreign key a IdentityUser.Id
+        [ValidateNever]
+        public IdentityUser Usuario { get; set; }  // Navegación
+
+
     }
 }
 

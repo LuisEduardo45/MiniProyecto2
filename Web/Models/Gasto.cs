@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace MvcTemplate.Models
@@ -27,6 +28,11 @@ namespace MvcTemplate.Models
         [ForeignKey("CategoriaId")]
         [ValidateNever] // ← Agrega esto
         public Categoria Categoria { get; set; }
+
+        // Relación con usuario
+        public string UsuarioId { get; set; }  // Foreign key a IdentityUser.Id
+        [ValidateNever]
+        public IdentityUser Usuario { get; set; }  // Navegación
     }
 }
 

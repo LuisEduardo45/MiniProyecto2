@@ -3,10 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using MvcTemplate.Models;
 using MvcTemplate.Data;
 using System.Reflection.Emit;
+using Microsoft.AspNetCore.Identity;
 
 namespace MvcTemplate.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)

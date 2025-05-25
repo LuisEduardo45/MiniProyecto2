@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace MvcTemplate.Models
 {
@@ -19,5 +21,9 @@ namespace MvcTemplate.Models
         public decimal TopeMaximo { get; set; }
 
         public bool Activa { get; set; }
+
+        public string UsuarioId { get; set; }  // Foreign key a IdentityUser.Id
+        [ValidateNever]
+        public IdentityUser Usuario { get; set; }  // Navegación
     }
 }
