@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MvcTemplate.Data;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MvcTemplate.Controllers
 {
@@ -16,18 +18,18 @@ namespace MvcTemplate.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             var mesActual = DateTime.Now.Month;
             var anioActual = DateTime.Now.Year;
 
-            var totalEntradas = _context.Entradas
+            var totalEntradas = await _context.Entradas
                 .Where(e => e.Fecha.Month == mesActual && e.Fecha.Year == anioActual)
-                .Sum(e => (decimal?)e.Valor) ?? 0;
+                .SumAsync(e => (decimal?)e.Valor) ?? 0;
 
-            var totalGastos = _context.Gastos
+            var totalGastos = await _context.Gastos
                 .Where(g => g.Fecha.Month == mesActual && g.Fecha.Year == anioActual)
-                .Sum(g => (decimal?)g.Monto) ?? 0;
+                .SumAsync(g => (decimal?)g.Monto) ?? 0;
 
             var saldo = totalEntradas - totalGastos;
 
@@ -35,10 +37,24 @@ namespace MvcTemplate.Controllers
             ViewData["TotalGastos"] = totalGastos;
             ViewData["Saldo"] = saldo;
 
+            // Obtiene los gastos por categoría para el gráfico
+            var gastosPorCategoria = await _context.Gastos
+                .Where(g => g.Fecha.Month == mesActual && g.Fecha.Year == anioActual)
+                .Include(g => g.Categoria)
+                .GroupBy(g => g.Categoria.Titulo)
+                .Select(g => new {
+                    Categoria = g.Key,
+                    Total = g.Sum(x => x.Monto)
+                })
+                .ToListAsync();
+
+            // Datos para la vista
+            ViewBag.Categorias = gastosPorCategoria.Select(g => g.Categoria).ToList();
+            ViewBag.Montos = gastosPorCategoria.Select(g => g.Total).ToList();
+
             return View();
         }
 
-        // 🔥 Esta es la acción que necesitas agregar
         public IActionResult Reportes()
         {
             var hoy = DateTime.Today;
@@ -65,5 +81,3 @@ namespace MvcTemplate.Controllers
         }
     }
 }
-
-

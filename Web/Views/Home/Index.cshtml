@@ -1,7 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Inicio";
 
-    // Recupera los datos enviados desde el controlador
     var totalEntradas = (decimal)ViewData["TotalEntradas"];
     var totalGastos = (decimal)ViewData["TotalGastos"];
     var saldo = (decimal)ViewData["Saldo"];
@@ -78,14 +77,49 @@
         </div>
     </div>
 
-    <!-- ESPACIO PARA FUTURAS GRÁFICAS -->
+    <!-- GRÁFICO DE GASTOS POR CATEGORÍA -->
     <div class="row">
         <div class="col-md-12">
             <div class="card p-4 shadow-sm">
-                <h5>Visualización de Datos (Próximamente)</h5>
-                <p>Aquí se podrá mostrar una gráfica con la evolución de gastos por categoría, mes y total.</p>
-                <div class="text-center text-muted py-5">[Gráfico de barras o pastel en desarrollo]</div>
+                <h5>Visualización de Gastos por Categoría</h5>
+                <canvas id="gastosChart" height="100"></canvas>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const categorias = @Html.Raw(Json.Serialize(ViewBag.Categorias));
+        const montos = @Html.Raw(Json.Serialize(ViewBag.Montos));
+
+        const ctx = document.getElementById('gastosChart').getContext('2d');
+        const gastosChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: categorias,
+                datasets: [{
+                    label: 'Gasto por Categoría (Mes Actual)',
+                    data: montos,
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}
