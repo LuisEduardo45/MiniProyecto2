@@ -20,7 +20,6 @@ namespace MvcTemplate.Controllers
         // LISTADO
         public IActionResult Index()
         {
-            // Incluimos la categoría para mostrar título
             var gastos = _context.Gastos.Include(g => g.Categoria).ToList();
             return View(gastos);
         }
@@ -28,7 +27,6 @@ namespace MvcTemplate.Controllers
         // CREAR (GET)
         public IActionResult Create()
         {
-            // Solo categorías activas para seleccionar
             ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
             return View();
         }
@@ -40,11 +38,39 @@ namespace MvcTemplate.Controllers
         {
             if (ModelState.IsValid)
             {
+                // Obtener presupuesto total (sumar todas las entradas)
+                decimal totalEntradas = _context.Entradas.Sum(e => e.Valor);
+
+                // Obtener categoría
+                var categoria = _context.Categorias.FirstOrDefault(c => c.Id == gasto.CategoriaId && c.Activa);
+                if (categoria == null)
+                {
+                    ModelState.AddModelError("", "Categoría no válida.");
+                    ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
+                    return View(gasto);
+                }
+
+                // Sumar gastos actuales en esta categoría
+                decimal gastoActual = _context.Gastos
+                    .Where(g => g.CategoriaId == gasto.CategoriaId)
+                    .Sum(g => g.Monto);
+
+                // Calcular tope máximo
+                decimal maximoPermitido = (categoria.PorcentajeMaximo / 100m) * totalEntradas;
+
+                // Validar que no supere el tope
+                if (gastoActual + gasto.Monto > maximoPermitido)
+                {
+                    ModelState.AddModelError("", $"El gasto excede el tope máximo permitido de ${maximoPermitido:C} para la categoría '{categoria.Titulo}'.");
+                    ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
+                    return View(gasto);
+                }
+
                 _context.Gastos.Add(gasto);
                 _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
-            // Si hay error, recarga categorías para el dropdown
+
             ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
             return View(gasto);
         }
@@ -56,7 +82,6 @@ namespace MvcTemplate.Controllers
             if (gasto == null)
                 return NotFound();
 
-            // Recargamos categorías activas para el dropdown
             ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
             return View(gasto);
         }
@@ -72,6 +97,35 @@ namespace MvcTemplate.Controllers
                 if (gastoExistente == null)
                     return NotFound();
 
+                // Obtener presupuesto total
+                decimal totalEntradas = _context.Entradas.Sum(e => e.Valor);
+
+                // Obtener categoría
+                var categoria = _context.Categorias.FirstOrDefault(c => c.Id == gasto.CategoriaId && c.Activa);
+                if (categoria == null)
+                {
+                    ModelState.AddModelError("", "Categoría no válida.");
+                    ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
+                    return View(gasto);
+                }
+
+                // Sumar gastos actuales en esta categoría, excepto el gasto que se está editando
+                decimal gastoActual = _context.Gastos
+                    .Where(g => g.CategoriaId == gasto.CategoriaId && g.Id != gasto.Id)
+                    .Sum(g => g.Monto);
+
+                // Calcular tope máximo
+                decimal maximoPermitido = (categoria.PorcentajeMaximo / 100m) * totalEntradas;
+
+                // Validar que no supere el tope
+                if (gastoActual + gasto.Monto > maximoPermitido)
+                {
+                    ModelState.AddModelError("", $"El gasto excede el tope máximo permitido de ${maximoPermitido} para la categoría '{categoria.Titulo}'.");
+                    ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
+                    return View(gasto);
+                }
+
+                // Actualizar gasto
                 gastoExistente.Descripcion = gasto.Descripcion;
                 gastoExistente.Monto = gasto.Monto;
                 gastoExistente.Fecha = gasto.Fecha;
@@ -80,7 +134,7 @@ namespace MvcTemplate.Controllers
                 _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
-            // Recargamos categorías activas si hay error
+
             ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
             return View(gasto);
         }
