@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MvcTemplate.Data;
 using MvcTemplate.Models;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace MvcTemplate.Controllers
 {
@@ -35,16 +37,13 @@ namespace MvcTemplate.Controllers
         {
             if (ModelState.IsValid)
             {
-                // 1. Guardar entrada global
                 _context.Entradas.Add(entrada);
                 await _context.SaveChangesAsync();
 
-                // 2. Obtener categorías activas
                 var categorias = await _context.Categorias
                     .Where(c => !c.Activa)
                     .ToListAsync();
 
-                // 3. Validar suma de porcentajes
                 var totalPorcentaje = categorias.Sum(c => c.PorcentajeMaximo);
                 if (totalPorcentaje != 1.0m)
                 {
@@ -52,7 +51,6 @@ namespace MvcTemplate.Controllers
                     return View(entrada);
                 }
 
-                // 4. Distribuir monto
                 foreach (var categoria in categorias)
                 {
                     var montoAsignado = entrada.Valor * categoria.PorcentajeMaximo;
@@ -69,6 +67,46 @@ namespace MvcTemplate.Controllers
                 }
 
                 await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+
+            return View(entrada);
+        }
+
+        // GET: Entrada/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var entrada = await _context.Entradas.FindAsync(id);
+            if (entrada == null) return NotFound();
+
+            return View(entrada);
+        }
+
+        // POST: Entrada/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, Entrada entrada)
+        {
+            if (id != entrada.Id)
+                return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(entrada);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.Entradas.Any(e => e.Id == id))
+                        return NotFound();
+                    else
+                        throw;
+                }
+
                 return RedirectToAction(nameof(Index));
             }
 
