@@ -23,8 +23,8 @@
                 <td>@gasto.Fecha.ToShortDateString()</td>
                 <td>@gasto.Categoria?.Titulo</td>
                 <td>
-                    <a asp-action="Edit" asp-route-id="@gasto.Id">Editar</a> |
-                    <a asp-action="Delete" asp-route-id="@gasto.Id">Eliminar</a>
+                    <a asp-action="Edit" asp-route-id="@gasto.Id" class="btn btn-warning btn-sm me-1">Editar</a> |
+                    <a asp-action="Delete" asp-route-id="@gasto.Id" class="btn btn-danger btn-sm">Eliminar</a>
                 </td>
             </tr>
         }

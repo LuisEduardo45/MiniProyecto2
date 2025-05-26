@@ -32,10 +32,6 @@ namespace MvcTemplate.Data
                 .Property(g => g.Monto)
                 .HasColumnType("decimal(18,2)");
 
-            builder.Entity<Categoria>()
-    .Property(c => c.TopeMaximo)
-    .HasColumnType("decimal(18,2)");
-
             // Puedes agregar configuraciones adicionales aquí si lo deseas
         }
     }

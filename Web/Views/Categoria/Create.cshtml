@@ -29,11 +29,6 @@
         <label asp-for="Activa" class="form-check-label"></label>
     </div>
 
-    <div class="mb-3">
-        <label asp-for="TopeMaximo" class="form-label">Tope Máximo</label>
-        <input asp-for="TopeMaximo" class="form-control" type="number" min="0" />
-        <span asp-validation-for="TopeMaximo" class="text-danger"></span>
-    </div>
 
     <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Guardar</button>
     <a asp-action="Index" class="btn btn-secondary">Cancelar</a>

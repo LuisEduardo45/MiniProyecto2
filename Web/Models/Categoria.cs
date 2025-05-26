@@ -16,8 +16,6 @@ namespace MvcTemplate.Models
         [Range(0, 100, ErrorMessage = "El porcentaje debe estar entre 0 y 100.")]
         public int PorcentajeMaximo { get; set; }
 
-        public decimal TopeMaximo { get; set; }
-
         public bool Activa { get; set; }
 
     }
