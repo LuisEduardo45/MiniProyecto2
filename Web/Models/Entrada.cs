@@ -14,6 +14,7 @@ namespace MvcTemplate.Models
 
         [Required]
         [DataType(DataType.Currency)]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El valor debe ser un número positivo.")]
         public decimal Valor { get; set; }
 
         [Required]

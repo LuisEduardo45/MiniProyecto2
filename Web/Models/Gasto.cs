@@ -13,7 +13,7 @@ namespace MvcTemplate.Models
         public string Descripcion { get; set; }
 
         [Required(ErrorMessage = "El monto es obligatorio.")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "El monto debe ser mayor a cero.")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El monto debe ser positivo.")]
         public decimal Monto { get; set; }
 
         [Required(ErrorMessage = "La fecha es obligatoria.")]
