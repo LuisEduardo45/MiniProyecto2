@@ -1,32 +1,82 @@
-﻿@model List<MvcTemplate.Models.ViewModels.ReporteCategoriaViewModel>
-@{
+﻿@{
     ViewData["Title"] = "Reporte de Gastos";
 }
 
-<h2>Reporte de Gastos por Categoría</h2>
+<h2>@ViewData["Title"]</h2>
 
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Categoría</th>
-            <th>Gasto Total</th>
-            <th>% Máximo</th>
-            <th>Tope Permitido</th>
-            <th>Estado</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr class="@(item.Excedido ? "table-danger" : "table-success")">
-                <td>@item.Titulo</td>
-                <td>$@item.GastoTotal</td>
-                <td>@item.PorcentajeMaximo%</td>
-                <td>$@item.TopePermitido</td>
-                <td>
-                    @(item.Excedido ? "❌ Excedido" : "✅ Dentro del límite")
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+<form method="get" class="mb-4">
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label for="categoriaId" class="form-label">Categoría</label>
+            <select id="categoriaId" name="categoriaId" class="form-select">
+                <option value="">-- Todas las categorías --</option>
+                @foreach (var cat in ViewBag.Categorias)
+                {
+                    if (ViewBag.FiltroCategoria == cat.Id)
+                    {
+                        <option value="@cat.Id" selected>@cat.Titulo</option>
+                    }
+                    else
+                    {
+                        <option value="@cat.Id">@cat.Titulo</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label for="fechaDesde" class="form-label">Fecha desde</label>
+            <input type="date" id="fechaDesde" name="fechaDesde" class="form-control" value="@ViewBag.FiltroFechaDesde" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="fechaHasta" class="form-label">Fecha hasta</label>
+            <input type="date" id="fechaHasta" name="fechaHasta" class="form-control" value="@ViewBag.FiltroFechaHasta" />
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+        </div>
+    </div>
+</form>
+
+<div class="card p-4 shadow-sm">
+    <h5>Gastos por Categoría</h5>
+    <canvas id="gastosChart" height="100"></canvas>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const categorias = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.CategoriasNombres));
+        const montos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Montos));
+
+        const ctx = document.getElementById('gastosChart').getContext('2d');
+        const gastosChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: categorias,
+                datasets: [{
+                    label: 'Gasto por Categoría',
+                    data: montos,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}

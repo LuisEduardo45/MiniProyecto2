@@ -1,45 +1,54 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MvcTemplate.Data;
 using Microsoft.EntityFrameworkCore;
-using MvcTemplate.Models.ViewModels;
+using MvcTemplate.Data;
+using System;
+using System.Linq;
 
-
-namespace MvcTemplate.Controllers
+public class ReporteController : Controller
 {
-    public class ReporteController : Controller
+    private readonly ApplicationDbContext _context;
+
+    public ReporteController(ApplicationDbContext context)
     {
-        private readonly ApplicationDbContext _context;
+        _context = context;
+    }
 
-        public ReporteController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+    public IActionResult Index(int? categoriaId, DateTime? fechaDesde, DateTime? fechaHasta)
+    {
+        // Obtener categorías para el filtro
+        ViewBag.Categorias = _context.Categorias
+            .Where(c => c.Activa)
+            .ToList();
 
-        public IActionResult Index()
-        {
-            // Obtener total de entradas del mes actual
-            var hoy = DateTime.Today;
-            var inicioMes = new DateTime(hoy.Year, hoy.Month, 1);
+        var gastosQuery = _context.Gastos.Include(g => g.Categoria).AsQueryable();
 
-            var totalEntradas = _context.Entradas
-                .Where(e => e.Fecha >= inicioMes && e.Fecha <= hoy)
-                .Sum(e => (decimal?)e.Valor) ?? 0;
+        if (categoriaId.HasValue)
+            gastosQuery = gastosQuery.Where(g => g.CategoriaId == categoriaId.Value);
 
-            var categorias = _context.Categorias
-                .Include(c => c.Gastos)
-                .Where(c => c.Activa)
-                .ToList()
-                .Select(c => new ReporteCategoriaViewModel
-                {
-                    Titulo = c.Titulo,
-                    PorcentajeMaximo = c.PorcentajeMaximo,
-                    GastoTotal = c.Gastos
-                        .Where(g => g.Fecha >= inicioMes && g.Fecha <= hoy)
-                        .Sum(g => g.Monto),
-                    TopePermitido = totalEntradas * c.PorcentajeMaximo / 100
-                }).ToList();
+        if (fechaDesde.HasValue)
+            gastosQuery = gastosQuery.Where(g => g.Fecha >= fechaDesde.Value);
 
-            return View(categorias);
-        }
+        if (fechaHasta.HasValue)
+            gastosQuery = gastosQuery.Where(g => g.Fecha <= fechaHasta.Value);
+
+        // Agrupar gastos por categoría y sumar montos
+        var datosReporte = gastosQuery
+            .GroupBy(g => g.Categoria.Titulo)
+            .Select(grp => new {
+                Categoria = grp.Key,
+                Total = grp.Sum(g => g.Monto)
+            })
+            .ToList();
+
+        // Pasar datos a la vista para gráfico
+        ViewBag.CategoriasNombres = datosReporte.Select(d => d.Categoria).ToList();
+        ViewBag.Montos = datosReporte.Select(d => d.Total).ToList();
+
+        // Pasar filtros actuales para que se mantengan en el formulario
+        ViewBag.FiltroCategoria = categoriaId;
+        ViewBag.FiltroFechaDesde = fechaDesde?.ToString("yyyy-MM-dd");
+        ViewBag.FiltroFechaHasta = fechaHasta?.ToString("yyyy-MM-dd");
+
+        return View();
     }
 }
