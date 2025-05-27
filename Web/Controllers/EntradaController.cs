@@ -40,16 +40,10 @@ namespace MvcTemplate.Controllers
                 _context.Entradas.Add(entrada);
                 await _context.SaveChangesAsync();
 
+
                 var categorias = await _context.Categorias
                     .Where(c => !c.Activa)
                     .ToListAsync();
-
-                var totalPorcentaje = categorias.Sum(c => c.PorcentajeMaximo);
-                if (totalPorcentaje != 1.0m)
-                {
-                    ModelState.AddModelError("", "La suma de los porcentajes de categorías debe ser exactamente 100%.");
-                    return View(entrada);
-                }
 
                 foreach (var categoria in categorias)
                 {
