@@ -77,6 +77,10 @@
         </div>
     </div>
 
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-controller="Reporte" asp-action="Index">Reporte</a>
+    </li>
+
     <!-- GRÁFICO DE GASTOS POR CATEGORÍA -->
     <div class="row">
         <div class="col-md-12">
@@ -88,38 +92,3 @@
     </div>
 </div>
 
-@section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const categorias = @Html.Raw(Json.Serialize(ViewBag.Categorias));
-        const montos = @Html.Raw(Json.Serialize(ViewBag.Montos));
-
-        const ctx = document.getElementById('gastosChart').getContext('2d');
-        const gastosChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: categorias,
-                datasets: [{
-                    label: 'Gasto por Categoría (Mes Actual)',
-                    data: montos,
-                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    </script>
-}

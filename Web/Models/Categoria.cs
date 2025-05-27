@@ -17,6 +17,6 @@ namespace MvcTemplate.Models
         public int PorcentajeMaximo { get; set; }
 
         public bool Activa { get; set; }
-
+        public virtual ICollection<Gasto> Gastos { get; set; } = new List<Gasto>();
     }
 }

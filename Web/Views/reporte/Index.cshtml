@@ -1,0 +1,32 @@
+﻿@model List<MvcTemplate.Models.ViewModels.ReporteCategoriaViewModel>
+@{
+    ViewData["Title"] = "Reporte de Gastos";
+}
+
+<h2>Reporte de Gastos por Categoría</h2>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Categoría</th>
+            <th>Gasto Total</th>
+            <th>% Máximo</th>
+            <th>Tope Permitido</th>
+            <th>Estado</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr class="@(item.Excedido ? "table-danger" : "table-success")">
+                <td>@item.Titulo</td>
+                <td>$@item.GastoTotal</td>
+                <td>@item.PorcentajeMaximo%</td>
+                <td>$@item.TopePermitido</td>
+                <td>
+                    @(item.Excedido ? "❌ Excedido" : "✅ Dentro del límite")
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
