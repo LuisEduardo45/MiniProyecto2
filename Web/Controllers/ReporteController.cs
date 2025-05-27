@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MvcTemplate.Data;
+using MvcTemplate.Models.ViewModels; // No olvides este using
 using System;
 using System.Linq;
 using ClosedXML.Excel;
@@ -42,6 +43,16 @@ public class ReporteController : Controller
             })
             .ToList();
 
+        // Preparar lista para tabla con tope permitido (ajusta el tope como necesites)
+        var detalleGastos = datosReporte.Select(d => new ReporteCategoriaViewModel
+        {
+            Titulo = d.Categoria,
+            GastoTotal = d.Total,
+            TopePermitido = 1000 // Ejemplo: cambia esto según tu lógica real
+        }).ToList();
+
+        ViewBag.DetalleGastos = detalleGastos;
+
         // Pasar datos a la vista para gráfico
         ViewBag.CategoriasNombres = datosReporte.Select(d => d.Categoria).ToList();
         ViewBag.Montos = datosReporte.Select(d => d.Total).ToList();
@@ -54,23 +65,22 @@ public class ReporteController : Controller
 
         // Nuevo gráfico: Gastos Totales Mensuales
         var totalesMensuales = _context.Gastos
-    .Where(g => (!categoriaId.HasValue || g.CategoriaId == categoriaId) &&
-                (!fechaDesde.HasValue || g.Fecha >= fechaDesde) &&
-                (!fechaHasta.HasValue || g.Fecha <= fechaHasta))
-    .GroupBy(g => new { g.Fecha.Year, g.Fecha.Month })
-    .Select(grp => new {
-        Anio = grp.Key.Year,
-        MesNumero = grp.Key.Month,
-        Total = grp.Sum(g => g.Monto)
-    })
-    .AsEnumerable() // Aquí se ejecuta la consulta en SQL y pasa a memoria
-    .Select(grp => new {
-        Mes = $"{grp.MesNumero:D2}/{grp.Anio}",
-        Total = grp.Total
-    })
-    .OrderBy(grp => grp.Mes)
-    .ToList();
-
+            .Where(g => (!categoriaId.HasValue || g.CategoriaId == categoriaId) &&
+                        (!fechaDesde.HasValue || g.Fecha >= fechaDesde) &&
+                        (!fechaHasta.HasValue || g.Fecha <= fechaHasta))
+            .GroupBy(g => new { g.Fecha.Year, g.Fecha.Month })
+            .Select(grp => new {
+                Anio = grp.Key.Year,
+                MesNumero = grp.Key.Month,
+                Total = grp.Sum(g => g.Monto)
+            })
+            .AsEnumerable()
+            .Select(grp => new {
+                Mes = $"{grp.MesNumero:D2}/{grp.Anio}",
+                Total = grp.Total
+            })
+            .OrderBy(grp => grp.Mes)
+            .ToList();
 
         ViewBag.Meses = totalesMensuales.Select(t => t.Mes).ToList();
         ViewBag.MontosMensuales = totalesMensuales.Select(t => t.Total).ToList();
@@ -120,5 +130,4 @@ public class ReporteController : Controller
 
         return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ReporteGastos.xlsx");
     }
-
 }
