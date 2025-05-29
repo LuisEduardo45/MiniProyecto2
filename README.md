@@ -58,7 +58,7 @@ dotnet test Test/UnitTest
 
 ## 👤 Autores
 
-- [Tu Nombre Aquí]
+- Kevin Ulloa
 - Proyecto académico / demostrativo.
 
 ## 📄 Licencia
