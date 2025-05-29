@@ -5,53 +5,52 @@
 <div class="container py-4">
     <h2 class="mb-4">@ViewData["Title"]</h2>
 
-<form method="get" class="mb-4">
-    <div class="row g-3">
-        <div class="col-md-3">
-            <label for="categoriaId" class="form-label">Categoría</label>
-            <select id="categoriaId" name="categoriaId" class="form-select">
-                <option value="">-- Todas las categorías --</option>
-                @foreach (var cat in ViewBag.Categorias)
-                {
-                    if (ViewBag.FiltroCategoria == cat.Id)
+    <form method="get" class="mb-4">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label for="categoriaId" class="form-label">Categoría</label>
+                <select id="categoriaId" name="categoriaId" class="form-select">
+                    <option value="">-- Todas las categorías --</option>
+                    @foreach (var cat in ViewBag.Categorias)
                     {
-                        <option value="@cat.Id" selected>@cat.Titulo</option>
+                        if (ViewBag.FiltroCategoria == cat.Id)
+                        {
+                            <option value="@cat.Id" selected>@cat.Titulo</option>
+                        }
+                        else
+                        {
+                            <option value="@cat.Id">@cat.Titulo</option>
+                        }
                     }
-                    else
-                    {
-                        <option value="@cat.Id">@cat.Titulo</option>
-                    }
-                }
-            </select>
-        </div>
+                </select>
+            </div>
 
-        <div class="col-md-3">
-            <label for="fechaDesde" class="form-label">Fecha desde</label>
-            <input type="date" id="fechaDesde" name="fechaDesde" class="form-control" value="@ViewBag.FiltroFechaDesde" />
-        </div>
+            <div class="col-md-3">
+                <label for="fechaDesde" class="form-label">Fecha desde</label>
+                <input type="date" id="fechaDesde" name="fechaDesde" class="form-control" value="@ViewBag.FiltroFechaDesde" />
+            </div>
 
-        <div class="col-md-3">
-            <label for="fechaHasta" class="form-label">Fecha hasta</label>
-            <input type="date" id="fechaHasta" name="fechaHasta" class="form-control" value="@ViewBag.FiltroFechaHasta" />
-        </div>
+            <div class="col-md-3">
+                <label for="fechaHasta" class="form-label">Fecha hasta</label>
+                <input type="date" id="fechaHasta" name="fechaHasta" class="form-control" value="@ViewBag.FiltroFechaHasta" />
+            </div>
 
-        <div class="col-md-3 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            </div>
+            <a asp-action="ExportarExcel" asp-route-fechaDesde="@ViewBag.FiltroFechaDesde" asp-route-fechaHasta="@ViewBag.FiltroFechaHasta" asp-route-categoriaId="@ViewBag.FiltroCategoria" class="btn btn-success mb-3">Exportar Excel</a>
         </div>
-        <a asp-action="ExportarExcel" asp-route-fechaDesde="@ViewBag.FiltroFechaDesde" asp-route-fechaHasta="@ViewBag.FiltroFechaHasta" asp-route-categoriaId="@ViewBag.FiltroCategoria" class="btn btn-success mb-3">Exportar Excel</a>
+    </form>
 
+    <div class="card p-4 shadow-sm">
+        <h5>Gastos por Categoría</h5>
+        <canvas id="gastosChart" height="100"></canvas>
     </div>
-</form>
 
-<div class="card p-4 shadow-sm">
-    <h5>Gastos por Categoría</h5>
-    <canvas id="gastosChart" height="100"></canvas>
-</div>
-
-<div class="card p-4 shadow-sm mt-4">
-    <h5 class="mb-3">Gastos Totales por Mes</h5>
-    <canvas id="mensualChart" height="100"></canvas>
-</div>
+    <div class="card p-4 shadow-sm mt-4">
+        <h5 class="mb-3">Gastos Totales por Mes</h5>
+        <canvas id="mensualChart" height="100"></canvas>
+    </div>
 
     <div class="card p-4 shadow-sm mt-4">
         <h5>Detalle de Gastos por Categoría</h5>
@@ -59,7 +58,7 @@
             <thead class="table-dark">
                 <tr>
                     <th>Categoría</th>
-                    <th class="text-end">Monto Total</th>
+                    <th class="text-end">Monto Total / Tope</th>
                     <th class="text-center">Estado</th>
                 </tr>
             </thead>
@@ -68,18 +67,30 @@
                 {
                     foreach (var item in (List<MvcTemplate.Models.ViewModels.ReporteCategoriaViewModel>)ViewBag.DetalleGastos)
                     {
-                        <tr class="@(item.Excedido ? "table-danger" : "")" title="@(item.Excedido ? "Excedido el tope permitido" : "Dentro del tope permitido")">
+                        string estado;
+                        string badgeClass;
+
+                        if (item.GastoTotal > item.TopePermitido)
+                        {
+                            estado = "Excedido";
+                            badgeClass = "bg-danger";
+                        }
+                        else if (item.GastoTotal == item.TopePermitido)
+                        {
+                            estado = "Has alcanzado tu tope máximo";
+                            badgeClass = "bg-warning text-dark";
+                        }
+                        else
+                        {
+                            estado = "OK";
+                            badgeClass = "bg-success";
+                        }
+
+                        <tr class="@(estado == "Excedido" ? "table-danger" : "")" title="@estado">
                             <td>@item.Titulo</td>
-                            <td class="text-end">@item.GastoTotal.ToString("C")</td>
+                            <td class="text-end">@item.GastoTotal.ToString("C") / @item.TopePermitido.ToString("C")</td>
                             <td class="text-center">
-                                @if (item.Excedido)
-                                {
-                                    <span class="badge bg-danger">Excedido</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-success">OK</span>
-                                }
+                                <span class="badge @badgeClass">@estado</span>
                             </td>
                         </tr>
                     }
@@ -93,12 +104,11 @@
             </tbody>
         </table>
     </div>
-
-
 </div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script>
         const categorias = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.CategoriasNombres));
         const montos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Montos));
@@ -177,5 +187,4 @@
             }
         });
     </script>
-
 }

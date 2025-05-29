@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MvcTemplate.Data;
-using MvcTemplate.Models.ViewModels; // No olvides este using
+using MvcTemplate.Models.ViewModels;
 using System;
 using System.Linq;
 using ClosedXML.Excel;
@@ -18,12 +18,14 @@ public class ReporteController : Controller
 
     public IActionResult Index(int? categoriaId, DateTime? fechaDesde, DateTime? fechaHasta)
     {
-        // Obtener categorías para el filtro
+        // Obtener categorías activas para el filtro
         ViewBag.Categorias = _context.Categorias
             .Where(c => c.Activa)
             .ToList();
 
-        var gastosQuery = _context.Gastos.Include(g => g.Categoria).AsQueryable();
+        var gastosQuery = _context.Gastos
+            .Include(g => g.Categoria)
+            .AsQueryable();
 
         if (categoriaId.HasValue)
             gastosQuery = gastosQuery.Where(g => g.CategoriaId == categoriaId.Value);
@@ -34,48 +36,57 @@ public class ReporteController : Controller
         if (fechaHasta.HasValue)
             gastosQuery = gastosQuery.Where(g => g.Fecha <= fechaHasta.Value);
 
-        // Agrupar gastos por categoría y sumar montos
+        // Agrupar gastos por categoría
         var datosReporte = gastosQuery
             .GroupBy(g => g.Categoria.Titulo)
-            .Select(grp => new {
+            .Select(grp => new
+            {
                 Categoria = grp.Key,
                 Total = grp.Sum(g => g.Monto)
             })
             .ToList();
 
-        // Preparar lista para tabla con tope permitido (ajusta el tope como necesites)
+        // Obtener total de entradas
+        var totalEntradas = _context.Entradas.Sum(e => e.Valor);
+
+        // Obtener porcentajes máximos por categoría
+        var categorias = _context.Categorias
+            .Where(c => c.Activa)
+            .ToDictionary(c => c.Titulo, c => c.PorcentajeMaximo);
+
+        // Preparar datos del reporte
         var detalleGastos = datosReporte.Select(d => new ReporteCategoriaViewModel
         {
             Titulo = d.Categoria,
             GastoTotal = d.Total,
-            TopePermitido = 1000 // Ejemplo: cambia esto según tu lógica real
+            TopePermitido = categorias.ContainsKey(d.Categoria)
+                ? Math.Round(totalEntradas * categorias[d.Categoria] / 100, 2)
+                : 0
         }).ToList();
 
         ViewBag.DetalleGastos = detalleGastos;
-
-        // Pasar datos a la vista para gráfico
         ViewBag.CategoriasNombres = datosReporte.Select(d => d.Categoria).ToList();
         ViewBag.Montos = datosReporte.Select(d => d.Total).ToList();
 
-        // Pasar filtros actuales para que se mantengan en el formulario
         ViewBag.FiltroCategoria = categoriaId;
         ViewBag.FiltroFechaDesde = fechaDesde?.ToString("yyyy-MM-dd");
         ViewBag.FiltroFechaHasta = fechaHasta?.ToString("yyyy-MM-dd");
 
-
-        // Nuevo gráfico: Gastos Totales Mensuales
+        // Gráfico de gastos totales por mes
         var totalesMensuales = _context.Gastos
             .Where(g => (!categoriaId.HasValue || g.CategoriaId == categoriaId) &&
                         (!fechaDesde.HasValue || g.Fecha >= fechaDesde) &&
                         (!fechaHasta.HasValue || g.Fecha <= fechaHasta))
             .GroupBy(g => new { g.Fecha.Year, g.Fecha.Month })
-            .Select(grp => new {
+            .Select(grp => new
+            {
                 Anio = grp.Key.Year,
                 MesNumero = grp.Key.Month,
                 Total = grp.Sum(g => g.Monto)
             })
             .AsEnumerable()
-            .Select(grp => new {
+            .Select(grp => new
+            {
                 Mes = $"{grp.MesNumero:D2}/{grp.Anio}",
                 Total = grp.Total
             })
@@ -103,7 +114,8 @@ public class ReporteController : Controller
 
         var datosReporte = gastosQuery
             .GroupBy(g => g.Categoria.Titulo)
-            .Select(grp => new {
+            .Select(grp => new
+            {
                 Categoria = grp.Key,
                 Monto = grp.Sum(g => g.Monto)
             })
@@ -128,6 +140,9 @@ public class ReporteController : Controller
         workbook.SaveAs(stream);
         stream.Seek(0, SeekOrigin.Begin);
 
-        return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ReporteGastos.xlsx");
+        return File(stream.ToArray(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "ReporteGastos.xlsx");
     }
 }
+
