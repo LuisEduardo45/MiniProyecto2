@@ -10,7 +10,7 @@ namespace MvcTemplate.Models
 
         [Required(ErrorMessage = "El título es obligatorio.")]
         [StringLength(100)]
-        public string Titulo { get; set; }
+        public string? Titulo { get; set; }
 
         public string? Descripcion { get; set; }
 

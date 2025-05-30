@@ -1,40 +1,30 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MvcTemplate.Data;
-using MvcTemplate.Models;
 using MvcTemplate.Models.ViewModels;
 using System;
 using System.Linq;
 using ClosedXML.Excel;
 using System.IO;
-using System.Threading.Tasks;
 
-[Authorize]
 public class ReporteController : Controller
 {
     private readonly ApplicationDbContext _context;
-    private readonly UserManager<ApplicationUser> _userManager;
 
-    public ReporteController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public ReporteController(ApplicationDbContext context)
     {
         _context = context;
-        _userManager = userManager;
     }
 
-    public async Task<IActionResult> Index(int? categoriaId, DateTime? fechaDesde, DateTime? fechaHasta)
+    public IActionResult Index(int? categoriaId, DateTime? fechaDesde, DateTime? fechaHasta)
     {
-        var userId = _userManager.GetUserId(User);
-
-        // Categorías del usuario
-        ViewBag.Categorias = await _context.Categorias
-            .Where(c => c.Activa && c.UsuarioId == userId)
-            .ToListAsync();
+        // Obtener categorías activas para el filtro
+        ViewBag.Categorias = _context.Categorias
+            .Where(c => c.Activa)
+            .ToList();
 
         var gastosQuery = _context.Gastos
             .Include(g => g.Categoria)
-            .Where(g => g.UsuarioId == userId)
             .AsQueryable();
 
         if (categoriaId.HasValue)
@@ -46,31 +36,36 @@ public class ReporteController : Controller
         if (fechaHasta.HasValue)
             gastosQuery = gastosQuery.Where(g => g.Fecha <= fechaHasta.Value);
 
-        var datosReporte = await gastosQuery
-            .GroupBy(g => g.Categoria.Titulo)
+        // Agrupar gastos por categoría
+        var datosReporte = gastosQuery
+            .GroupBy(g => g.Categoria != null ? g.Categoria.Titulo : "Sin Categoría")
             .Select(grp => new
             {
                 Categoria = grp.Key,
                 Total = grp.Sum(g => g.Monto)
             })
-            .ToListAsync();
+            .ToList();
 
-        decimal totalEntradas = await _context.Entradas
-            .Where(e => e.UsuarioId == userId)
-            .SumAsync(e => e.Valor);
 
-        var categorias = await _context.Categorias
-            .Where(c => c.Activa && c.UsuarioId == userId)
-            .ToDictionaryAsync(c => c.Titulo, c => c.PorcentajeMaximo);
+        // Obtener total de entradas
+        var totalEntradas = _context.Entradas.Sum(e => e.Valor);
 
+        // Obtener porcentajes máximos por categoría
+        var categorias = _context.Categorias
+        .Where(c => c.Activa && c.Titulo != null) // Filtrar categorías con Titulo no nulo
+        .ToDictionary(c => c.Titulo!, c => c.PorcentajeMaximo); // Usar operador de supresión de nulabilidad (!)
+
+
+        // Preparar datos del reporte
         var detalleGastos = datosReporte.Select(d => new ReporteCategoriaViewModel
         {
             Titulo = d.Categoria,
             GastoTotal = d.Total,
-            TopePermitido = categorias.ContainsKey(d.Categoria)
-                ? Math.Round(totalEntradas * categorias[d.Categoria] / 100, 2)
-                : 0
+            TopePermitido = !string.IsNullOrEmpty(d.Categoria) && categorias.ContainsKey(d.Categoria)
+        ? Math.Round(totalEntradas * categorias[d.Categoria] / 100, 2)
+        : 0
         }).ToList();
+
 
         ViewBag.DetalleGastos = detalleGastos;
         ViewBag.CategoriasNombres = datosReporte.Select(d => d.Categoria).ToList();
@@ -80,42 +75,37 @@ public class ReporteController : Controller
         ViewBag.FiltroFechaDesde = fechaDesde?.ToString("yyyy-MM-dd");
         ViewBag.FiltroFechaHasta = fechaHasta?.ToString("yyyy-MM-dd");
 
-        // Datos para gráfico mensual
-        var totalesMensuales = await _context.Gastos
-            .Where(g => g.UsuarioId == userId &&
-                        (!categoriaId.HasValue || g.CategoriaId == categoriaId) &&
+        // Gráfico de gastos totales por mes
+        var totalesMensuales = _context.Gastos
+            .Where(g => (!categoriaId.HasValue || g.CategoriaId == categoriaId) &&
                         (!fechaDesde.HasValue || g.Fecha >= fechaDesde) &&
                         (!fechaHasta.HasValue || g.Fecha <= fechaHasta))
-            .GroupBy(g => new { g.Fecha.Year, g.Fecha.Month })
+                        .GroupBy(g => new { Year = g.Fecha.HasValue ? g.Fecha.Value.Year : 0, Month = g.Fecha.HasValue ? g.Fecha.Value.Month : 0 })
+
             .Select(grp => new
             {
                 Anio = grp.Key.Year,
                 MesNumero = grp.Key.Month,
                 Total = grp.Sum(g => g.Monto)
             })
-            .ToListAsync();
-
-        ViewBag.Meses = totalesMensuales
-            .OrderBy(t => t.Anio).ThenBy(t => t.MesNumero)
-            .Select(t => $"{t.MesNumero:D2}/{t.Anio}")
+            .AsEnumerable()
+            .Select(grp => new
+            {
+                Mes = $"{grp.MesNumero:D2}/{grp.Anio}",
+                Total = grp.Total
+            })
+            .OrderBy(grp => grp.Mes)
             .ToList();
 
-        ViewBag.MontosMensuales = totalesMensuales
-            .OrderBy(t => t.Anio).ThenBy(t => t.MesNumero)
-            .Select(t => t.Total)
-            .ToList();
+        ViewBag.Meses = totalesMensuales.Select(t => t.Mes).ToList();
+        ViewBag.MontosMensuales = totalesMensuales.Select(t => t.Total).ToList();
 
         return View();
     }
 
-    public async Task<IActionResult> ExportarExcel(DateTime? fechaDesde, DateTime? fechaHasta, int? categoriaId)
+    public IActionResult ExportarExcel(DateTime? fechaDesde, DateTime? fechaHasta, int? categoriaId)
     {
-        var userId = _userManager.GetUserId(User);
-
-        var gastosQuery = _context.Gastos
-            .Include(g => g.Categoria)
-            .Where(g => g.UsuarioId == userId)
-            .AsQueryable();
+        var gastosQuery = _context.Gastos.Include(g => g.Categoria).AsQueryable();
 
         if (categoriaId.HasValue)
             gastosQuery = gastosQuery.Where(g => g.CategoriaId == categoriaId.Value);
@@ -126,14 +116,15 @@ public class ReporteController : Controller
         if (fechaHasta.HasValue)
             gastosQuery = gastosQuery.Where(g => g.Fecha <= fechaHasta.Value);
 
-        var datosReporte = await gastosQuery
-            .GroupBy(g => g.Categoria.Titulo)
-            .Select(grp => new
-            {
-                Categoria = grp.Key,
-                Monto = grp.Sum(g => g.Monto)
-            })
-            .ToListAsync();
+        var datosReporte = gastosQuery
+        .GroupBy(g => g.Categoria != null && g.Categoria.Titulo != null ? g.Categoria.Titulo : "Sin Categoría")
+        .Select(grp => new
+         {
+           Categoria = grp.Key,
+            Total = grp.Sum(g => g.Monto)
+         })
+        .ToList();
+
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Reporte Gastos");
@@ -146,7 +137,7 @@ public class ReporteController : Controller
         foreach (var item in datosReporte)
         {
             worksheet.Cell(fila, 1).Value = item.Categoria;
-            worksheet.Cell(fila, 2).Value = item.Monto;
+            worksheet.Cell(fila, 2).Value = item.Total;
             fila++;
         }
 
@@ -159,3 +150,4 @@ public class ReporteController : Controller
             "ReporteGastos.xlsx");
     }
 }
+
