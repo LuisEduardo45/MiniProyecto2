@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MvcTemplate.Data;
 using MvcTemplate.Models;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MvcTemplate.Controllers
 {
@@ -11,138 +13,199 @@ namespace MvcTemplate.Controllers
     public class GastoController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public GastoController(ApplicationDbContext context)
+        public GastoController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // LISTADO
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var gastos = _context.Gastos.Include(g => g.Categoria).ToList();
+            var userId = _userManager.GetUserId(User);
+            var gastos = await _context.Gastos
+                .Where(g => g.UsuarioId == userId)
+                .Include(g => g.Categoria)
+                .ToListAsync();
+
             return View(gastos);
         }
 
         // CREAR (GET)
         public IActionResult Create()
         {
-            ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
+            var userId = _userManager.GetUserId(User);
+            ViewBag.Categorias = _context.Categorias
+                .Where(c => c.Activa && c.UsuarioId == userId)
+                .ToList();
             return View();
         }
 
         // CREAR (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Gasto gasto)
+        public async Task<IActionResult> Create(Gasto gasto)
         {
-            if (ModelState.IsValid)
+            var userId = _userManager.GetUserId(User);
+            gasto.UsuarioId = userId;  // Asignar UsuarioId antes de validar
+            ModelState.Remove(nameof(gasto.UsuarioId)); // Quitar validación para UsuarioId
+
+            if (!ModelState.IsValid)
             {
-                // Obtener presupuesto total (sumar todas las entradas)
-                decimal totalEntradas = _context.Entradas.Sum(e => e.Valor);
-
-                // Obtener categoría
-                var categoria = _context.Categorias.FirstOrDefault(c => c.Id == gasto.CategoriaId && c.Activa);
-                if (categoria == null)
-                {
-                    ModelState.AddModelError("", "Categoría no válida.");
-                    ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
-                    return View(gasto);
-                }
-
-                // Sumar gastos actuales en esta categoría
-                decimal gastoActual = _context.Gastos
-                    .Where(g => g.CategoriaId == gasto.CategoriaId)
-                    .Sum(g => g.Monto);
-
-                // Calcular tope máximo
-                decimal maximoPermitido = (categoria.PorcentajeMaximo / 100m) * totalEntradas;
-
-                // Validar que no supere el tope
-                if (gastoActual + gasto.Monto > maximoPermitido)
-                {
-                    ModelState.AddModelError("", $"El gasto excede el tope máximo permitido de ${maximoPermitido:C} para la categoría '{categoria.Titulo}'.");
-                    ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
-                    return View(gasto);
-                }
-
-                _context.Gastos.Add(gasto);
-                _context.SaveChanges();
-                return RedirectToAction(nameof(Index));
+                ViewBag.Categorias = _context.Categorias
+                    .Where(c => c.Activa && c.UsuarioId == userId)
+                    .ToList();
+                return View(gasto);
             }
 
-            ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
-            return View(gasto);
+            var categoria = await _context.Categorias
+                .FirstOrDefaultAsync(c => c.Id == gasto.CategoriaId && c.Activa && c.UsuarioId == userId);
+
+            if (categoria == null)
+            {
+                ModelState.AddModelError("", "Categoría no válida.");
+                ViewBag.Categorias = _context.Categorias
+                    .Where(c => c.Activa && c.UsuarioId == userId)
+                    .ToList();
+                return View(gasto);
+            }
+
+            decimal totalEntradas = await _context.Entradas
+                .Where(e => e.UsuarioId == userId)
+                .SumAsync(e => e.Valor);
+
+            decimal gastoActual = await _context.Gastos
+                .Where(g => g.CategoriaId == gasto.CategoriaId && g.UsuarioId == userId)
+                .SumAsync(g => g.Monto);
+
+            decimal maximoPermitido = (categoria.PorcentajeMaximo / 100m) * totalEntradas;
+
+            if (gastoActual + gasto.Monto > maximoPermitido)
+            {
+                ModelState.AddModelError("", $"El gasto excede el tope máximo permitido de {maximoPermitido:C} para la categoría '{categoria.Titulo}'.");
+                ViewBag.Categorias = _context.Categorias
+                    .Where(c => c.Activa && c.UsuarioId == userId)
+                    .ToList();
+                return View(gasto);
+            }
+
+            try
+            {
+                _context.Gastos.Add(gasto);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                ModelState.AddModelError("", "Error guardando el gasto en la base de datos: " + ex.Message);
+                ViewBag.Categorias = _context.Categorias
+                    .Where(c => c.Activa && c.UsuarioId == userId)
+                    .ToList();
+                return View(gasto);
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         // EDITAR (GET)
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
-            var gasto = _context.Gastos.FirstOrDefault(g => g.Id == id);
+            var userId = _userManager.GetUserId(User);
+            var gasto = await _context.Gastos
+                .FirstOrDefaultAsync(g => g.Id == id && g.UsuarioId == userId);
+
             if (gasto == null)
                 return NotFound();
 
-            ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
+            ViewBag.Categorias = _context.Categorias
+                .Where(c => c.Activa && c.UsuarioId == userId)
+                .ToList();
+
             return View(gasto);
         }
 
         // EDITAR (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(Gasto gasto)
+        public async Task<IActionResult> Edit(Gasto gasto)
         {
-            if (ModelState.IsValid)
+            var userId = _userManager.GetUserId(User);
+
+            if (!ModelState.IsValid)
             {
-                var gastoExistente = _context.Gastos.FirstOrDefault(g => g.Id == gasto.Id);
-                if (gastoExistente == null)
-                    return NotFound();
-
-                // Obtener presupuesto total
-                decimal totalEntradas = _context.Entradas.Sum(e => e.Valor);
-
-                // Obtener categoría
-                var categoria = _context.Categorias.FirstOrDefault(c => c.Id == gasto.CategoriaId && c.Activa);
-                if (categoria == null)
-                {
-                    ModelState.AddModelError("", "Categoría no válida.");
-                    ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
-                    return View(gasto);
-                }
-
-                // Sumar gastos actuales en esta categoría, excepto el gasto que se está editando
-                decimal gastoActual = _context.Gastos
-                    .Where(g => g.CategoriaId == gasto.CategoriaId && g.Id != gasto.Id)
-                    .Sum(g => g.Monto);
-
-                // Calcular tope máximo
-                decimal maximoPermitido = (categoria.PorcentajeMaximo / 100m) * totalEntradas;
-
-                // Validar que no supere el tope
-                if (gastoActual + gasto.Monto > maximoPermitido)
-                {
-                    ModelState.AddModelError("", $"El gasto excede el tope máximo permitido de ${maximoPermitido} para la categoría '{categoria.Titulo}'.");
-                    ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
-                    return View(gasto);
-                }
-
-                // Actualizar gasto
-                gastoExistente.Descripcion = gasto.Descripcion;
-                gastoExistente.Monto = gasto.Monto;
-                gastoExistente.Fecha = gasto.Fecha;
-                gastoExistente.CategoriaId = gasto.CategoriaId;
-
-                _context.SaveChanges();
-                return RedirectToAction(nameof(Index));
+                ViewBag.Categorias = _context.Categorias
+                    .Where(c => c.Activa && c.UsuarioId == userId)
+                    .ToList();
+                return View(gasto);
             }
 
-            ViewBag.Categorias = _context.Categorias.Where(c => c.Activa).ToList();
-            return View(gasto);
+            var gastoExistente = await _context.Gastos
+                .FirstOrDefaultAsync(g => g.Id == gasto.Id && g.UsuarioId == userId);
+
+            if (gastoExistente == null)
+                return NotFound();
+
+            var categoria = await _context.Categorias
+                .FirstOrDefaultAsync(c => c.Id == gasto.CategoriaId && c.Activa && c.UsuarioId == userId);
+
+            if (categoria == null)
+            {
+                ModelState.AddModelError("", "Categoría no válida.");
+                ViewBag.Categorias = _context.Categorias
+                    .Where(c => c.Activa && c.UsuarioId == userId)
+                    .ToList();
+                return View(gasto);
+            }
+
+            decimal totalEntradas = await _context.Entradas
+                .Where(e => e.UsuarioId == userId)
+                .SumAsync(e => e.Valor);
+
+            decimal gastoActual = await _context.Gastos
+                .Where(g => g.CategoriaId == gasto.CategoriaId && g.Id != gasto.Id && g.UsuarioId == userId)
+                .SumAsync(g => g.Monto);
+
+            decimal maximoPermitido = (categoria.PorcentajeMaximo / 100m) * totalEntradas;
+
+            if (gastoActual + gasto.Monto > maximoPermitido)
+            {
+                ModelState.AddModelError("", $"El gasto excede el tope máximo permitido de {maximoPermitido:C} para la categoría '{categoria.Titulo}'.");
+                ViewBag.Categorias = _context.Categorias
+                    .Where(c => c.Activa && c.UsuarioId == userId)
+                    .ToList();
+                return View(gasto);
+            }
+
+            gastoExistente.Descripcion = gasto.Descripcion;
+            gastoExistente.Monto = gasto.Monto;
+            gastoExistente.Fecha = gasto.Fecha;
+            gastoExistente.CategoriaId = gasto.CategoriaId;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                ModelState.AddModelError("", "Error actualizando el gasto en la base de datos: " + ex.Message);
+                ViewBag.Categorias = _context.Categorias
+                    .Where(c => c.Activa && c.UsuarioId == userId)
+                    .ToList();
+                return View(gasto);
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         // ELIMINAR (GET)
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var gasto = _context.Gastos.Include(g => g.Categoria).FirstOrDefault(g => g.Id == id);
+            var userId = _userManager.GetUserId(User);
+            var gasto = await _context.Gastos
+                .Include(g => g.Categoria)
+                .FirstOrDefaultAsync(g => g.Id == id && g.UsuarioId == userId);
+
             if (gasto == null)
                 return NotFound();
 
@@ -152,14 +215,26 @@ namespace MvcTemplate.Controllers
         // ELIMINAR (POST)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var gasto = _context.Gastos.FirstOrDefault(g => g.Id == id);
+            var userId = _userManager.GetUserId(User);
+            var gasto = await _context.Gastos.FirstOrDefaultAsync(g => g.Id == id && g.UsuarioId == userId);
+
             if (gasto == null)
                 return NotFound();
 
             _context.Gastos.Remove(gasto);
-            _context.SaveChanges();
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                ModelState.AddModelError("", "Error eliminando el gasto en la base de datos: " + ex.Message);
+                return View(gasto);
+            }
+
             return RedirectToAction(nameof(Index));
         }
     }

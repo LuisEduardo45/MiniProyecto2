@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using MvcTemplate.Models;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using MvcTemplate.Data;
+using MvcTemplate.Models;
 using System.Linq;
-using Microsoft.AspNetCore.Authorization;
 
 namespace MvcTemplate.Controllers
 {
@@ -10,16 +11,19 @@ namespace MvcTemplate.Controllers
     public class CategoriaController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public CategoriaController(ApplicationDbContext context)
+        public CategoriaController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // LISTADO
         public IActionResult Index()
         {
-            var categorias = _context.Categorias.ToList();
+            var userId = _userManager.GetUserId(User);
+            var categorias = _context.Categorias.Where(c => c.UsuarioId == userId).ToList();
             return View(categorias);
         }
 
@@ -32,35 +36,43 @@ namespace MvcTemplate.Controllers
         // CREAR (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Categoria categoria)
+        public async Task<IActionResult> Create(Categoria categoria)
         {
-            if (ModelState.IsValid)
+            // Asignar UsuarioId antes de validar
+            categoria.UsuarioId = _userManager.GetUserId(User);
+            ModelState.Remove(nameof(categoria.UsuarioId));
+
+            if (!ModelState.IsValid)
             {
-                var totalActual = _context.Categorias
-                    .Where(c => c.Activa)
-                    .Sum(c => (decimal?)c.PorcentajeMaximo) ?? 0;
-
-                var nuevoTotal = totalActual + categoria.PorcentajeMaximo;
-
-                if (categoria.PorcentajeMaximo > 0 && nuevoTotal > 100)
-                {
-                    ModelState.AddModelError("PorcentajeMaximo", $"No puedes agregar esta categoría porque el total superaría el 100% (actual: {totalActual}%).");
-                    return View(categoria);
-                }
-
-                categoria.Activa = true;
-                _context.Categorias.Add(categoria);
-                _context.SaveChanges();
-                return RedirectToAction(nameof(Index));
+                return View(categoria);
             }
 
-            return View(categoria);
+            // Aquí puedes seguir con la lógica que ya tienes (validar porcentaje, etc.)
+
+            var totalActual = _context.Categorias
+                .Where(c => c.Activa && c.UsuarioId == categoria.UsuarioId)
+                .Sum(c => (decimal?)c.PorcentajeMaximo) ?? 0;
+
+            var nuevoTotal = totalActual + categoria.PorcentajeMaximo;
+
+            if (categoria.PorcentajeMaximo > 0 && nuevoTotal > 100)
+            {
+                ModelState.AddModelError("PorcentajeMaximo", $"No puedes agregar esta categoría porque el total superaría el 100% (actual: {totalActual}%).");
+                return View(categoria);
+            }
+
+            categoria.Activa = true;
+            _context.Categorias.Add(categoria);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
         }
 
         // EDITAR (GET)
         public IActionResult Edit(int id)
         {
-            var categoria = _context.Categorias.FirstOrDefault(c => c.Id == id);
+            var userId = _userManager.GetUserId(User);
+            var categoria = _context.Categorias.FirstOrDefault(c => c.Id == id && c.UsuarioId == userId);
             if (categoria == null)
                 return NotFound();
 
@@ -72,14 +84,16 @@ namespace MvcTemplate.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(Categoria categoria)
         {
+            var userId = _userManager.GetUserId(User);
+
             if (ModelState.IsValid)
             {
-                var categoriaExistente = _context.Categorias.FirstOrDefault(c => c.Id == categoria.Id);
+                var categoriaExistente = _context.Categorias.FirstOrDefault(c => c.Id == categoria.Id && c.UsuarioId == userId);
                 if (categoriaExistente == null)
                     return NotFound();
 
                 var totalActual = _context.Categorias
-                    .Where(c => c.Activa && c.Id != categoria.Id)
+                    .Where(c => c.Activa && c.Id != categoria.Id && c.UsuarioId == userId)
                     .Sum(c => (decimal?)c.PorcentajeMaximo) ?? 0;
 
                 var nuevoTotal = totalActual + categoria.PorcentajeMaximo;
@@ -105,7 +119,8 @@ namespace MvcTemplate.Controllers
         // ELIMINAR (GET)
         public IActionResult Delete(int id)
         {
-            var categoria = _context.Categorias.FirstOrDefault(c => c.Id == id);
+            var userId = _userManager.GetUserId(User);
+            var categoria = _context.Categorias.FirstOrDefault(c => c.Id == id && c.UsuarioId == userId);
             if (categoria == null)
                 return NotFound();
 
@@ -117,7 +132,8 @@ namespace MvcTemplate.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
-            var categoria = _context.Categorias.FirstOrDefault(c => c.Id == id);
+            var userId = _userManager.GetUserId(User);
+            var categoria = _context.Categorias.FirstOrDefault(c => c.Id == id && c.UsuarioId == userId);
             if (categoria == null)
                 return NotFound();
 
@@ -127,6 +143,3 @@ namespace MvcTemplate.Controllers
         }
     }
 }
-
-
-

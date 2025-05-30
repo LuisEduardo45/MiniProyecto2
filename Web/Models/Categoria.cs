@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace MvcTemplate.Models
 {
@@ -17,6 +19,14 @@ namespace MvcTemplate.Models
         public int PorcentajeMaximo { get; set; }
 
         public bool Activa { get; set; }
+
+        [Required]
+        public string UsuarioId { get; set; }
+
+        [ForeignKey("UsuarioId")]
+        [ValidateNever]
+        public ApplicationUser Usuario { get; set; }
+
         public virtual ICollection<Gasto> Gastos { get; set; } = new List<Gasto>();
     }
 }

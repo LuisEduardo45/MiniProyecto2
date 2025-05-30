@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
@@ -25,10 +26,16 @@ namespace MvcTemplate.Models
 
         // Relación con la categoría
         [ForeignKey("CategoriaId")]
-        [ValidateNever] // ← Agrega esto
+        [ValidateNever]
         public Categoria Categoria { get; set; }
 
+        // Relación con el usuario que creó el gasto
+        [Required]
+        public string UsuarioId { get; set; }
+
+        [ForeignKey("UsuarioId")]
+        [ValidateNever]
+        public ApplicationUser Usuario { get; set; }
     }
 }
-
 

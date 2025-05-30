@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Services.Common;
 using Microsoft.EntityFrameworkCore;
 using MvcTemplate.Data;
+using MvcTemplate.Models;
 
 // Alias para resolver ambigüedad
 using MvcTemplateDbContext = MvcTemplate.Data.ApplicationDbContext;
@@ -18,9 +19,13 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Aquí usamos el alias para el DbContext correcto
+        // Imprimir cadena de conexión actual para depuración
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection1");
+        Console.WriteLine($"Connection String actual: {connectionString}");
+
+        // Configuración del DbContext con la cadena de conexión
         builder.Services.AddDbContext<MvcTemplateDbContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+             options.UseSqlServer(connectionString));
 
         var mappingConfiguration = new MapperConfiguration(m => m.AddProfile(new MProfile()));
         IMapper mapper = mappingConfiguration.CreateMapper();
@@ -28,10 +33,11 @@ public class Program
         builder.Services.AddInfrastructure(builder.Configuration);
         builder.Services.AddServices(builder.Configuration);
 
-        builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
+        // Configuración de Identity con ApplicationUser
+        builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
             .AddEntityFrameworkStores<MvcTemplateDbContext>();
 
-        // ❌ Eliminamos política de autorización global
+        // Configuración MVC
         builder.Services.AddControllersWithViews();
 
         builder.Services.ConfigureApplicationCookie(options =>

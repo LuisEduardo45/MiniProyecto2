@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using DocumentFormat.OpenXml.Bibliography;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MvcTemplate.Data;
@@ -12,133 +14,164 @@ namespace MvcTemplate.Controllers
     public class EntradaController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public EntradaController(ApplicationDbContext context)
+        public EntradaController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
-        // GET: Entrada
+        // LISTADO
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Entradas.OrderByDescending(e => e.Fecha).ToListAsync());
+            var userId = _userManager.GetUserId(User);
+            var entradas = await _context.Entradas
+                .Where(e => e.UsuarioId == userId)
+                .ToListAsync();
+
+            return View(entradas);
         }
 
-        // GET: Entrada/Create
+        // CREAR (GET)
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Entrada/Create
+        // CREAR (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Entrada entrada)
         {
-            if (ModelState.IsValid)
+            entrada.UsuarioId = _userManager.GetUserId(User);
+            ModelState.Remove(nameof(entrada.UsuarioId));
+
+            // Mostrar errores de validación
+            foreach (var modelState in ModelState)
+            {
+                var key = modelState.Key;
+                var errors = modelState.Value.Errors;
+                foreach (var error in errors)
+                {
+                    Console.WriteLine($"Error en {key}: {error.ErrorMessage}");
+                }
+            }
+
+            if (!ModelState.IsValid)
+            {
+                Console.WriteLine("ModelState inválido");
+                return View(entrada);
+            }
+
+            try
             {
                 _context.Entradas.Add(entrada);
-                await _context.SaveChangesAsync();
+                var rows = await _context.SaveChangesAsync();
+                Console.WriteLine($"Filas afectadas: {rows}");
 
-
-                var categorias = await _context.Categorias
-                    .Where(c => !c.Activa)
-                    .ToListAsync();
-
-                foreach (var categoria in categorias)
+                if (rows == 0)
                 {
-                    var montoAsignado = entrada.Valor * categoria.PorcentajeMaximo;
-
-                    var gasto = new Gasto
-                    {
-                        CategoriaId = categoria.Id,
-                        Monto = montoAsignado,
-                        Fecha = entrada.Fecha,
-                        Descripcion = $"Distribución automática de entrada #{entrada.Id}"
-                    };
-
-                    _context.Gastos.Add(gasto);
+                    ModelState.AddModelError("", "No se guardó ninguna entrada en la base de datos.");
+                    return View(entrada);
                 }
-
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error al guardar entrada: " + ex.Message);
+                ModelState.AddModelError("", "Error guardando la entrada en la base de datos: " + ex.Message);
+                return View(entrada);
             }
 
-            return View(entrada);
+            return RedirectToAction(nameof(Index));
         }
 
-        // GET: Entrada/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+
+
+
+        // EDITAR (GET)
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null) return NotFound();
+            var userId = _userManager.GetUserId(User);
+            var entrada = await _context.Entradas
+                .FirstOrDefaultAsync(e => e.Id == id && e.UsuarioId == userId);
 
-            var entrada = await _context.Entradas.FindAsync(id);
-            if (entrada == null) return NotFound();
-
-            return View(entrada);
-        }
-
-        // POST: Entrada/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Entrada entrada)
-        {
-            if (id != entrada.Id)
+            if (entrada == null)
                 return NotFound();
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(entrada);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!_context.Entradas.Any(e => e.Id == id))
-                        return NotFound();
-                    else
-                        throw;
-                }
+            return View(entrada);
+        }
 
-                return RedirectToAction(nameof(Index));
+        // EDITAR (POST)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Entrada entrada)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            if (!ModelState.IsValid)
+            {
+                return View(entrada);
             }
 
-            return View(entrada);
+            var entradaExistente = await _context.Entradas
+                .FirstOrDefaultAsync(e => e.Id == entrada.Id && e.UsuarioId == userId);
+
+            if (entradaExistente == null)
+                return NotFound();
+
+            entradaExistente.Descripcion = entrada.Descripcion;
+            entradaExistente.Valor = entrada.Valor;
+            entradaExistente.Fecha = entrada.Fecha;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                ModelState.AddModelError("", "Error actualizando la entrada en la base de datos: " + ex.Message);
+                return View(entrada);
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
-        // GET: Entrada/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // ELIMINAR (GET)
+        public async Task<IActionResult> Delete(int id)
         {
-            if (id == null) return NotFound();
+            var userId = _userManager.GetUserId(User);
+            var entrada = await _context.Entradas
+                .FirstOrDefaultAsync(e => e.Id == id && e.UsuarioId == userId);
 
-            var entrada = await _context.Entradas.FirstOrDefaultAsync(m => m.Id == id);
-            if (entrada == null) return NotFound();
-
-            return View(entrada);
-        }
-
-        // GET: Entrada/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var entrada = await _context.Entradas.FirstOrDefaultAsync(m => m.Id == id);
-            if (entrada == null) return NotFound();
+            if (entrada == null)
+                return NotFound();
 
             return View(entrada);
         }
 
-        // POST: Entrada/Delete/5
+        // ELIMINAR (POST)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var entrada = await _context.Entradas.FindAsync(id);
-            if (entrada != null)
+            var userId = _userManager.GetUserId(User);
+            var entrada = await _context.Entradas
+                .FirstOrDefaultAsync(e => e.Id == id && e.UsuarioId == userId);
+
+            if (entrada == null)
+                return NotFound();
+
+            _context.Entradas.Remove(entrada);
+
+            try
             {
-                _context.Entradas.Remove(entrada);
                 await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                ModelState.AddModelError("", "Error eliminando la entrada en la base de datos: " + ex.Message);
+                return View(entrada);
             }
 
             return RedirectToAction(nameof(Index));

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;  // Agregar este using
 
 namespace MvcTemplate.Models
 {
@@ -21,7 +21,12 @@ namespace MvcTemplate.Models
         [DataType(DataType.Date)]
         public DateTime Fecha { get; set; }
 
- 
+        // Relación con el usuario que creó la entrada
+        [Required]
+        public string UsuarioId { get; set; }
+
+        [ForeignKey("UsuarioId")]
+        [ValidateNever]   // <-- Aquí
+        public ApplicationUser Usuario { get; set; }
     }
 }
-
