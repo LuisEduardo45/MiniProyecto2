@@ -28,8 +28,10 @@ namespace MvcTemplate.Controllers
                 .SumAsync(e => (decimal?)e.Valor) ?? 0;
 
             var totalGastos = await _context.Gastos
-                .Where(g => g.Fecha.Month == mesActual && g.Fecha.Year == anioActual)
+                .Where(g => g.Fecha.HasValue && g.Fecha.Value.Month == mesActual && g.Fecha.Value.Year == anioActual)
                 .SumAsync(g => (decimal?)g.Monto) ?? 0;
+
+
 
             var saldo = totalEntradas - totalGastos;
 
@@ -37,16 +39,17 @@ namespace MvcTemplate.Controllers
             ViewData["TotalGastos"] = totalGastos;
             ViewData["Saldo"] = saldo;
 
-            // Obtiene los gastos por categoría para el gráfico
             var gastosPorCategoria = await _context.Gastos
-                .Where(g => g.Fecha.Month == mesActual && g.Fecha.Year == anioActual)
+                .Where(g => g.Fecha.HasValue && g.Fecha.Value.Month == mesActual && g.Fecha.Value.Year == anioActual && g.Categoria != null)
                 .Include(g => g.Categoria)
-                .GroupBy(g => g.Categoria.Titulo)
+                .GroupBy(g => g.Categoria!.Titulo) // Use null-forgiving operator
                 .Select(g => new {
                     Categoria = g.Key,
                     Total = g.Sum(x => x.Monto)
                 })
                 .ToListAsync();
+
+
 
             // Datos para la vista
             ViewBag.Categorias = gastosPorCategoria.Select(g => g.Categoria).ToList();
@@ -69,8 +72,9 @@ namespace MvcTemplate.Controllers
                 .Where(g => g.Fecha >= inicioDeSemana)
                 .Sum(g => (decimal?)g.Monto) ?? 0;
             var gastoDiario = _context.Gastos
-                .Where(g => g.Fecha.Date == hoy)
+                .Where(g => g.Fecha.HasValue && g.Fecha.Value.Date == hoy)
                 .Sum(g => (decimal?)g.Monto) ?? 0;
+
 
             ViewData["GastoTotal"] = gastoTotal;
             ViewData["GastoMensual"] = gastoMensual;

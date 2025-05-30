@@ -1,10 +1,11 @@
 ﻿@{
     ViewData["Title"] = "Inicio";
 
-    var totalEntradas = (decimal)ViewData["TotalEntradas"];
-    var totalGastos = (decimal)ViewData["TotalGastos"];
-    var saldo = (decimal)ViewData["Saldo"];
+    var totalEntradas = (decimal?)(ViewData["TotalEntradas"]) ?? 0m;
+    var totalGastos = (decimal?)(ViewData["TotalGastos"]) ?? 0m;
+    var saldo = (decimal?)(ViewData["Saldo"]) ?? 0m;
 }
+
 
 <div class="container mt-5">
     <h1 class="mb-4 text-center fw-bold">Panel de Control</h1>

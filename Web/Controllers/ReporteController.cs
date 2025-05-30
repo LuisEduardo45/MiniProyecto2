@@ -38,7 +38,7 @@ public class ReporteController : Controller
 
         // Agrupar gastos por categoría
         var datosReporte = gastosQuery
-            .GroupBy(g => g.Categoria.Titulo)
+            .GroupBy(g => g.Categoria != null ? g.Categoria.Titulo : "Sin Categoría")
             .Select(grp => new
             {
                 Categoria = grp.Key,
@@ -46,23 +46,26 @@ public class ReporteController : Controller
             })
             .ToList();
 
+
         // Obtener total de entradas
         var totalEntradas = _context.Entradas.Sum(e => e.Valor);
 
         // Obtener porcentajes máximos por categoría
         var categorias = _context.Categorias
-            .Where(c => c.Activa)
-            .ToDictionary(c => c.Titulo, c => c.PorcentajeMaximo);
+        .Where(c => c.Activa && c.Titulo != null) // Filtrar categorías con Titulo no nulo
+        .ToDictionary(c => c.Titulo!, c => c.PorcentajeMaximo); // Usar operador de supresión de nulabilidad (!)
+
 
         // Preparar datos del reporte
         var detalleGastos = datosReporte.Select(d => new ReporteCategoriaViewModel
         {
             Titulo = d.Categoria,
             GastoTotal = d.Total,
-            TopePermitido = categorias.ContainsKey(d.Categoria)
-                ? Math.Round(totalEntradas * categorias[d.Categoria] / 100, 2)
-                : 0
+            TopePermitido = !string.IsNullOrEmpty(d.Categoria) && categorias.ContainsKey(d.Categoria)
+        ? Math.Round(totalEntradas * categorias[d.Categoria] / 100, 2)
+        : 0
         }).ToList();
+
 
         ViewBag.DetalleGastos = detalleGastos;
         ViewBag.CategoriasNombres = datosReporte.Select(d => d.Categoria).ToList();
@@ -77,7 +80,8 @@ public class ReporteController : Controller
             .Where(g => (!categoriaId.HasValue || g.CategoriaId == categoriaId) &&
                         (!fechaDesde.HasValue || g.Fecha >= fechaDesde) &&
                         (!fechaHasta.HasValue || g.Fecha <= fechaHasta))
-            .GroupBy(g => new { g.Fecha.Year, g.Fecha.Month })
+                        .GroupBy(g => new { Year = g.Fecha.HasValue ? g.Fecha.Value.Year : 0, Month = g.Fecha.HasValue ? g.Fecha.Value.Month : 0 })
+
             .Select(grp => new
             {
                 Anio = grp.Key.Year,
@@ -113,13 +117,14 @@ public class ReporteController : Controller
             gastosQuery = gastosQuery.Where(g => g.Fecha <= fechaHasta.Value);
 
         var datosReporte = gastosQuery
-            .GroupBy(g => g.Categoria.Titulo)
-            .Select(grp => new
-            {
-                Categoria = grp.Key,
-                Monto = grp.Sum(g => g.Monto)
-            })
-            .ToList();
+        .GroupBy(g => g.Categoria != null && g.Categoria.Titulo != null ? g.Categoria.Titulo : "Sin Categoría")
+        .Select(grp => new
+         {
+           Categoria = grp.Key,
+            Total = grp.Sum(g => g.Monto)
+         })
+        .ToList();
+
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Reporte Gastos");
@@ -132,7 +137,7 @@ public class ReporteController : Controller
         foreach (var item in datosReporte)
         {
             worksheet.Cell(fila, 1).Value = item.Categoria;
-            worksheet.Cell(fila, 2).Value = item.Monto;
+            worksheet.Cell(fila, 2).Value = item.Total;
             fila++;
         }
 

@@ -1,4 +1,6 @@
-﻿namespace MvcTemplate.Tests
+﻿
+
+namespace MvcTemplate.Tests
 {
     [TestClass]
     public sealed class Test1
@@ -7,5 +9,13 @@
         public void TestMethod1()
         {
         }
+    }
+
+    internal class TestMethodAttribute : Attribute
+    {
+    }
+
+    internal class TestClassAttribute : Attribute
+    {
     }
 }

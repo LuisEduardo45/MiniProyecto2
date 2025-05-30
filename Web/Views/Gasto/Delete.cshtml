@@ -15,8 +15,7 @@
         <dd class="col-sm-9">@Model.Monto.ToString("C")</dd>
 
         <dt class="col-sm-3">Fecha</dt>
-        <dd class="col-sm-9">@Model.Fecha.ToShortDateString()</dd>
-
+        <dd class="col-sm-9">@((Model.Fecha.HasValue) ? Model.Fecha.Value.ToShortDateString() : "")</dd>
         <dt class="col-sm-3">Categoría</dt>
         <dd class="col-sm-9">@Model.Categoria?.Titulo</dd>
     </dl>

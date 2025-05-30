@@ -20,7 +20,7 @@
                 <td>@gasto.Id</td>
                 <td>@gasto.Descripcion</td>
                 <td>@gasto.Monto.ToString("C")</td>
-                <td>@gasto.Fecha.ToShortDateString()</td>
+                <td>@(gasto.Fecha.HasValue ? gasto.Fecha.Value.ToShortDateString() : "")</td>
                 <td>@gasto.Categoria?.Titulo</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@gasto.Id" class="btn btn-warning btn-sm me-1">Editar</a> |
