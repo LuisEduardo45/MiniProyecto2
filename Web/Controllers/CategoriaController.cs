@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MvcTemplate.Data;
 using MvcTemplate.Models;
+using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MvcTemplate.Controllers
 {
@@ -38,7 +41,6 @@ namespace MvcTemplate.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Categoria categoria)
         {
-            // Asignar UsuarioId antes de validar
             categoria.UsuarioId = _userManager.GetUserId(User);
             ModelState.Remove(nameof(categoria.UsuarioId));
 
@@ -46,8 +48,6 @@ namespace MvcTemplate.Controllers
             {
                 return View(categoria);
             }
-
-            // Aquí puedes seguir con la lógica que ya tienes (validar porcentaje, etc.)
 
             var totalActual = _context.Categorias
                 .Where(c => c.Activa && c.UsuarioId == categoria.UsuarioId)
@@ -62,8 +62,23 @@ namespace MvcTemplate.Controllers
             }
 
             categoria.Activa = true;
-            _context.Categorias.Add(categoria);
-            await _context.SaveChangesAsync();
+
+            try
+            {
+                _context.Categorias.Add(categoria);
+                var rows = await _context.SaveChangesAsync();
+
+                if (rows == 0)
+                {
+                    ModelState.AddModelError("", "No se guardó ninguna categoría en la base de datos.");
+                    return View(categoria);
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                ModelState.AddModelError("", "Error guardando la categoría: " + ex.Message);
+                return View(categoria);
+            }
 
             return RedirectToAction(nameof(Index));
         }
@@ -82,38 +97,53 @@ namespace MvcTemplate.Controllers
         // EDITAR (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(Categoria categoria)
+        public async Task<IActionResult> Edit(Categoria categoria)
         {
             var userId = _userManager.GetUserId(User);
+            ModelState.Remove(nameof(categoria.UsuarioId));
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
+                return View(categoria);
+
+            var categoriaExistente = await _context.Categorias
+                .FirstOrDefaultAsync(c => c.Id == categoria.Id && c.UsuarioId == userId);
+
+            if (categoriaExistente == null)
+                return NotFound();
+
+            var totalActual = _context.Categorias
+                .Where(c => c.Activa && c.Id != categoria.Id && c.UsuarioId == userId)
+                .Sum(c => (decimal?)c.PorcentajeMaximo) ?? 0;
+
+            var nuevoTotal = totalActual + categoria.PorcentajeMaximo;
+
+            if (categoria.PorcentajeMaximo > 0 && nuevoTotal > 100)
             {
-                var categoriaExistente = _context.Categorias.FirstOrDefault(c => c.Id == categoria.Id && c.UsuarioId == userId);
-                if (categoriaExistente == null)
-                    return NotFound();
-
-                var totalActual = _context.Categorias
-                    .Where(c => c.Activa && c.Id != categoria.Id && c.UsuarioId == userId)
-                    .Sum(c => (decimal?)c.PorcentajeMaximo) ?? 0;
-
-                var nuevoTotal = totalActual + categoria.PorcentajeMaximo;
-
-                if (categoria.PorcentajeMaximo > 0 && nuevoTotal > 100)
-                {
-                    ModelState.AddModelError("PorcentajeMaximo", $"No puedes asignar este porcentaje porque el total superaría el 100% (actual sin esta: {totalActual}%).");
-                    return View(categoria);
-                }
-
-                categoriaExistente.Titulo = categoria.Titulo;
-                categoriaExistente.Descripcion = categoria.Descripcion;
-                categoriaExistente.PorcentajeMaximo = categoria.PorcentajeMaximo;
-                categoriaExistente.Activa = categoria.Activa;
-
-                _context.SaveChanges();
-                return RedirectToAction(nameof(Index));
+                ModelState.AddModelError("PorcentajeMaximo", $"No puedes asignar este porcentaje porque el total superaría el 100% (actual sin esta: {totalActual}%).");
+                return View(categoria);
             }
 
-            return View(categoria);
+            categoriaExistente.Titulo = categoria.Titulo;
+            categoriaExistente.Descripcion = categoria.Descripcion;
+            categoriaExistente.PorcentajeMaximo = categoria.PorcentajeMaximo;
+            categoriaExistente.Activa = categoria.Activa;
+
+            try
+            {
+                var rows = await _context.SaveChangesAsync();
+                if (rows == 0)
+                {
+                    ModelState.AddModelError("", "No se actualizó ninguna categoría.");
+                    return View(categoria);
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                ModelState.AddModelError("", "Error actualizando la categoría: " + ex.Message);
+                return View(categoria);
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         // ELIMINAR (GET)
@@ -130,15 +160,31 @@ namespace MvcTemplate.Controllers
         // ELIMINAR (POST)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var userId = _userManager.GetUserId(User);
-            var categoria = _context.Categorias.FirstOrDefault(c => c.Id == id && c.UsuarioId == userId);
+            var categoria = await _context.Categorias.FirstOrDefaultAsync(c => c.Id == id && c.UsuarioId == userId);
+
             if (categoria == null)
                 return NotFound();
 
-            _context.Categorias.Remove(categoria);
-            _context.SaveChanges();
+            try
+            {
+                _context.Categorias.Remove(categoria);
+                var rows = await _context.SaveChangesAsync();
+
+                if (rows == 0)
+                {
+                    ModelState.AddModelError("", "No se eliminó ninguna categoría.");
+                    return View(categoria);
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                ModelState.AddModelError("", "Error eliminando la categoría: " + ex.Message);
+                return View(categoria);
+            }
+
             return RedirectToAction(nameof(Index));
         }
     }

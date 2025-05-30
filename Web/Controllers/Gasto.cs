@@ -49,8 +49,8 @@ namespace MvcTemplate.Controllers
         public async Task<IActionResult> Create(Gasto gasto)
         {
             var userId = _userManager.GetUserId(User);
-            gasto.UsuarioId = userId;  // Asignar UsuarioId antes de validar
-            ModelState.Remove(nameof(gasto.UsuarioId)); // Quitar validación para UsuarioId
+            gasto.UsuarioId = userId;
+            ModelState.Remove(nameof(gasto.UsuarioId));
 
             if (!ModelState.IsValid)
             {
@@ -131,6 +131,8 @@ namespace MvcTemplate.Controllers
         public async Task<IActionResult> Edit(Gasto gasto)
         {
             var userId = _userManager.GetUserId(User);
+            gasto.UsuarioId = userId;
+            ModelState.Remove(nameof(gasto.UsuarioId));
 
             if (!ModelState.IsValid)
             {
@@ -239,3 +241,4 @@ namespace MvcTemplate.Controllers
         }
     }
 }
+

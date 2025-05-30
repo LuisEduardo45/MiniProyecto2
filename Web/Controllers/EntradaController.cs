@@ -1,10 +1,10 @@
-﻿using DocumentFormat.OpenXml.Bibliography;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MvcTemplate.Data;
 using MvcTemplate.Models;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -47,20 +47,8 @@ namespace MvcTemplate.Controllers
             entrada.UsuarioId = _userManager.GetUserId(User);
             ModelState.Remove(nameof(entrada.UsuarioId));
 
-            // Mostrar errores de validación
-            foreach (var modelState in ModelState)
-            {
-                var key = modelState.Key;
-                var errors = modelState.Value.Errors;
-                foreach (var error in errors)
-                {
-                    Console.WriteLine($"Error en {key}: {error.ErrorMessage}");
-                }
-            }
-
             if (!ModelState.IsValid)
             {
-                Console.WriteLine("ModelState inválido");
                 return View(entrada);
             }
 
@@ -68,7 +56,6 @@ namespace MvcTemplate.Controllers
             {
                 _context.Entradas.Add(entrada);
                 var rows = await _context.SaveChangesAsync();
-                Console.WriteLine($"Filas afectadas: {rows}");
 
                 if (rows == 0)
                 {
@@ -78,16 +65,12 @@ namespace MvcTemplate.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error al guardar entrada: " + ex.Message);
                 ModelState.AddModelError("", "Error guardando la entrada en la base de datos: " + ex.Message);
                 return View(entrada);
             }
 
             return RedirectToAction(nameof(Index));
         }
-
-
-
 
         // EDITAR (GET)
         public async Task<IActionResult> Edit(int id)
@@ -108,6 +91,8 @@ namespace MvcTemplate.Controllers
         public async Task<IActionResult> Edit(Entrada entrada)
         {
             var userId = _userManager.GetUserId(User);
+            entrada.UsuarioId = userId;
+            ModelState.Remove(nameof(entrada.UsuarioId));
 
             if (!ModelState.IsValid)
             {
