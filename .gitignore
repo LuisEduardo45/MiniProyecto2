@@ -55,3 +55,4 @@ tool-manifest.json
 *.DS_Store
 Thumbs.db
 Desktop.ini
+/Web/Migrations/20250525145554_InitialCreate.cs
